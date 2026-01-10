@@ -27,7 +27,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<RoleRedirect />} />
 
-          <Route element={<Protected roles={[ROLES.SUPERADMIN]} />}> 
+          <Route element={<Protected roles={[ROLES.SUPERADMIN]} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/superadmin" element={<SuperAdminOverview />} />
               <Route path="/superadmin/users" element={<UsersManage />} />

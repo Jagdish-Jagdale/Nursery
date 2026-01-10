@@ -48,7 +48,7 @@ export default function Login() {
       <div className="absolute -left-32 -bottom-32 h-80 w-80 rounded-full bg-green-500/20 blur-3xl animate-float-delayed" />
 
       <div className="container mx-auto grid h-screen place-items-center p-4 font-sans">
-        <div className="w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 lg:grid lg:grid-cols-[0.9fr_1fr] min-h-[520px] animate-fadeIn">
+        <div className="w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 flex flex-col lg:grid lg:grid-cols-[0.9fr_1fr] min-h-[520px] animate-fadeIn">
           <div className="relative hidden items-center justify-center bg-gradient-to-br from-green-600 to-green-500 p-8 lg:flex">
             <div className="absolute left-6 top-6 grid grid-cols-6 gap-2 opacity-60">
               {Array.from({ length: 12 }).map((_, i) => (
@@ -65,7 +65,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="relative flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-6 sm:p-8">
+          <div className="relative flex-1 flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-6 sm:p-8">
             <div className="absolute -right-16 -top-16 hidden h-32 w-32 rounded-full bg-emerald-200/40 blur-2xl animate-pulse-slow lg:block" />
 
             <div className="mx-auto w-full max-w-sm">
@@ -120,8 +120,8 @@ export default function Login() {
                   {loading ? 'Signing in...' : 'Login'}
                 </button>
 
-                <p className="pt-2 text-center text-sm text-slate-500">
-                  Don't have an account? <Link to="/register" className="font-semibold text-green-600 hover:text-green-700 hover:underline">Create account</Link>
+                <p className="pt-6 text-center text-sm text-slate-500">
+                  Don't have an account? <Link to="/register" className="font-semibold text-green-600 hover:text-green-700 ">Register</Link>
                 </p>
               </form>
             </div>
