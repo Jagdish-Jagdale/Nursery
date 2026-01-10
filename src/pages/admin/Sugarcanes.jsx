@@ -5,6 +5,9 @@ import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import SugarcaneForm from '../../components/forms/SugarcaneForm'
+import Table, { TableCell, TableRow } from '../../components/common/Table'
+import Button from '../../components/common/Button'
+import { Plus, Pencil, Trash2, Sprout } from 'lucide-react'
 
 export default function Sugarcanes() {
   const { user } = useAuth()
@@ -43,7 +46,7 @@ export default function Sugarcanes() {
           const url = await getDownloadURL(storageRef)
           await updateDoc(doc(db, 'sugarcanes', editing.id), { imageUrl: url })
         }
-        toast.success('Updated')
+        toast.success('Updated successfully')
       } else {
         const docRef = await addDoc(collection(db, 'sugarcanes'), { ...data, ownerId: user.uid, createdAt: serverTimestamp() })
         if (file) {
@@ -52,7 +55,7 @@ export default function Sugarcanes() {
           const url = await getDownloadURL(storageRef)
           await updateDoc(doc(db, 'sugarcanes', docRef.id), { imageUrl: url })
         }
-        toast.success('Created')
+        toast.success('Created successfully')
       }
       setShowForm(false)
       setEditing(null)
@@ -63,10 +66,10 @@ export default function Sugarcanes() {
   }
 
   const remove = async (id) => {
-    if (!confirm('Delete this item?')) return
+    if (!confirm('Are you sure you want to delete this item?')) return
     try {
       await deleteDoc(doc(db, 'sugarcanes', id))
-      toast.success('Deleted')
+      toast.success('Deleted successfully')
       await load()
     } catch {
       toast.error('Delete failed')
@@ -76,54 +79,62 @@ export default function Sugarcanes() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Sugarcane Items</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true) }} className="rounded-md bg-indigo-600 px-4 py-2 text-white">Add Item</button>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Inventory Items</h1>
+          <p className="text-slate-500 text-sm">Manage your sugarcane varieties and stock.</p>
+        </div>
+        <Button onClick={() => { setEditing(null); setShowForm(true) }}>
+          <Plus size={18} className="mr-2" /> Add Item
+        </Button>
       </div>
 
       {showForm && (
-        <div className="rounded-lg border p-4">
-          <h2 className="mb-3 font-medium">{editing ? 'Edit Item' : 'New Item'}</h2>
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-slate-800">{editing ? 'Edit Item' : 'New Item'}</h2>
           <SugarcaneForm value={editing} nurseries={nurseries} onSave={save} onCancel={() => { setShowForm(false); setEditing(null) }} />
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="px-4 py-2 text-left">Image</th>
-              <th className="px-4 py-2 text-left">Name</th>
-              <th className="px-4 py-2 text-left">Variety</th>
-              <th className="px-4 py-2 text-left">Price</th>
-              <th className="px-4 py-2 text-left">Stock</th>
-              <th className="px-4 py-2 text-left">Nursery</th>
-              <th className="px-4 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td className="px-4 py-3" colSpan={7}>Loading...</td></tr>
-            ) : items.length ? (
-              items.map((n) => (
-                <tr key={n.id} className="border-t">
-                  <td className="px-4 py-2">{n.imageUrl ? <img src={n.imageUrl} alt="item" className="h-12 w-12 rounded object-cover" /> : '-'}</td>
-                  <td className="px-4 py-2">{n.name}</td>
-                  <td className="px-4 py-2">{n.variety}</td>
-                  <td className="px-4 py-2">₹{n.price?.toFixed?.(2) ?? n.price}</td>
-                  <td className="px-4 py-2">{n.stock}</td>
-                  <td className="px-4 py-2">{nurseries.find((x) => x.id === n.nurseryId)?.name || '-'}</td>
-                  <td className="px-4 py-2 space-x-2">
-                    <button onClick={() => { setEditing(n); setShowForm(true) }} className="rounded-md border px-3 py-1">Edit</button>
-                    <button onClick={() => remove(n.id)} className="rounded-md border px-3 py-1">Delete</button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr><td className="px-4 py-3" colSpan={7}>No items</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table headers={['Image', 'Name', 'Variety', 'Price', 'Stock', 'Nursery', 'Actions']}>
+        {loading ? (
+          <TableRow><TableCell className="text-center py-8" colSpan={7}>Loading inventory...</TableCell></TableRow>
+        ) : items.length ? (
+          items.map((n) => (
+            <TableRow key={n.id}>
+              <TableCell>
+                {n.imageUrl ? (
+                  <img src={n.imageUrl} alt="item" className="h-12 w-12 rounded-lg object-cover border border-slate-100 shadow-sm" />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <Sprout size={20} />
+                  </div>
+                )}
+              </TableCell>
+              <TableCell><span className="font-medium text-slate-700">{n.name}</span></TableCell>
+              <TableCell>{n.variety}</TableCell>
+              <TableCell className="font-semibold text-emerald-700">₹{n.price?.toFixed?.(2) ?? n.price}</TableCell>
+              <TableCell>
+                <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${n.stock > 10 ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                  {n.stock}
+                </div>
+              </TableCell>
+              <TableCell className="text-xs text-slate-500">{nurseries.find((x) => x.id === n.nurseryId)?.name || '-'}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" size="sm" onClick={() => { setEditing(n); setShowForm(true) }}>
+                    <Pencil size={14} className="mr-1" /> Edit
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => remove(n.id)}>
+                    <Trash2 size={14} className="mr-1" /> Delete
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow><TableCell className="text-center py-8 text-slate-400" colSpan={7}>No items found.</TableCell></TableRow>
+        )}
+      </Table>
     </div>
   )
 }

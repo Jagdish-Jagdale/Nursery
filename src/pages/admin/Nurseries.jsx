@@ -5,6 +5,9 @@ import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import NurseryForm from '../../components/forms/NurseryForm'
+import Table, { TableCell, TableRow } from '../../components/common/Table'
+import Button from '../../components/common/Button'
+import { Plus, Pencil, Trash2, Sprout } from 'lucide-react'
 
 export default function Nurseries() {
   const { user } = useAuth()
@@ -39,7 +42,7 @@ export default function Nurseries() {
           const url = await getDownloadURL(storageRef)
           await updateDoc(doc(db, 'nurseries', editing.id), { imageUrl: url })
         }
-        toast.success('Updated')
+        toast.success('Updated successfully')
       } else {
         const docRef = await addDoc(collection(db, 'nurseries'), { ...data, ownerId: user.uid, createdAt: serverTimestamp() })
         if (file) {
@@ -48,7 +51,7 @@ export default function Nurseries() {
           const url = await getDownloadURL(storageRef)
           await updateDoc(doc(db, 'nurseries', docRef.id), { imageUrl: url })
         }
-        toast.success('Created')
+        toast.success('Created successfully')
       }
       setShowForm(false)
       setEditing(null)
@@ -59,10 +62,10 @@ export default function Nurseries() {
   }
 
   const remove = async (id) => {
-    if (!confirm('Delete this nursery?')) return
+    if (!confirm('Are you sure you want to delete this nursery?')) return
     try {
       await deleteDoc(doc(db, 'nurseries', id))
-      toast.success('Deleted')
+      toast.success('Deleted successfully')
       await load()
     } catch {
       toast.error('Delete failed')
@@ -72,50 +75,55 @@ export default function Nurseries() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Nurseries</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true) }} className="rounded-md bg-indigo-600 px-4 py-2 text-white">Add Nursery</button>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Manage Nurseries</h1>
+          <p className="text-slate-500 text-sm">Add or update your nursery locations.</p>
+        </div>
+        <Button onClick={() => { setEditing(null); setShowForm(true) }}>
+          <Plus size={18} className="mr-2" /> Add Nursery
+        </Button>
       </div>
 
       {showForm && (
-        <div className="rounded-lg border p-4">
-          <h2 className="mb-3 font-medium">{editing ? 'Edit Nursery' : 'New Nursery'}</h2>
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-slate-800">{editing ? 'Edit Nursery' : 'New Nursery'}</h2>
           <NurseryForm value={editing} onSave={save} onCancel={() => { setShowForm(false); setEditing(null) }} />
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="px-4 py-2 text-left">Image</th>
-              <th className="px-4 py-2 text-left">Name</th>
-              <th className="px-4 py-2 text-left">City</th>
-              <th className="px-4 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td className="px-4 py-3" colSpan={4}>Loading...</td></tr>
-            ) : items.length ? (
-              items.map((n) => (
-                <tr key={n.id} className="border-t">
-                  <td className="px-4 py-2">
-                    {n.imageUrl ? <img src={n.imageUrl} alt="nursery" className="h-12 w-12 rounded object-cover" /> : '-'}
-                  </td>
-                  <td className="px-4 py-2">{n.name}</td>
-                  <td className="px-4 py-2">{n.city}</td>
-                  <td className="px-4 py-2 space-x-2">
-                    <button onClick={() => { setEditing(n); setShowForm(true) }} className="rounded-md border px-3 py-1">Edit</button>
-                    <button onClick={() => remove(n.id)} className="rounded-md border px-3 py-1">Delete</button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr><td className="px-4 py-3" colSpan={4}>No nurseries</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table headers={['Image', 'Name', 'City', 'Actions']}>
+        {loading ? (
+          <TableRow><TableCell className="text-center py-8" colSpan={4}>Loading nurseries...</TableCell></TableRow>
+        ) : items.length ? (
+          items.map((n) => (
+            <TableRow key={n.id}>
+              <TableCell>
+                {n.imageUrl ? (
+                  <img src={n.imageUrl} alt="nursery" className="h-12 w-12 rounded-lg object-cover border border-slate-100 shadow-sm" />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <Sprout size={20} />
+                  </div>
+                )}
+              </TableCell>
+              <TableCell><span className="font-medium text-slate-700">{n.name}</span></TableCell>
+              <TableCell>{n.city}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" size="sm" onClick={() => { setEditing(n); setShowForm(true) }}>
+                    <Pencil size={14} className="mr-1" /> Edit
+                  </Button>
+                  <Button variant="danger" size="sm" onClick={() => remove(n.id)}>
+                    <Trash2 size={14} className="mr-1" /> Delete
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow><TableCell className="text-center py-8 text-slate-400" colSpan={4}>No nurseries found. Click "Add Nursery" to create one.</TableCell></TableRow>
+        )}
+      </Table>
     </div>
   )
 }
