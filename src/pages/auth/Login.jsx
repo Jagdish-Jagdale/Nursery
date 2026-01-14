@@ -1,32 +1,55 @@
-import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
-import toast from 'react-hot-toast'
-import { Mail, Lock } from 'lucide-react'
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const from = location.state?.from?.pathname || '/dashboard'
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showErrorBorder, setShowErrorBorder] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/dashboard";
+  const submittingRef = useRef(false);
 
   const onSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      await login(email, password)
-      toast.success('Logged in')
-      navigate(from, { replace: true })
-    } catch (e) {
-      toast.error(e.message || 'Login failed')
-    } finally {
-      setLoading(false)
+    e.preventDefault();
+
+    // Prevent double submission
+    if (submittingRef.current || loading) {
+      return;
     }
-  }
+
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    try {
+      submittingRef.current = true;
+      setError("");
+      setLoading(true);
+
+      await login(email, password);
+      toast.success("Login successful!");
+      navigate(from, { replace: true });
+    } catch (e) {
+      setError("Invalid email address or password. Please try again.");
+      setShowErrorBorder(true);
+      setTimeout(() => {
+        setError("");
+        setShowErrorBorder(false);
+      }, 2000);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="relative h-screen overflow-hidden">
@@ -34,9 +57,10 @@ export default function Login() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1597868165956-03a6827955b1?w=1600&auto=format&fit=crop&q=80')",
-          filter: 'blur(5px)',
-          transform: 'scale(1.1)'
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1597868165956-03a6827955b1?w=1600&auto=format&fit=crop&q=80')",
+          filter: "blur(5px)",
+          transform: "scale(1.1)",
         }}
       />
 
@@ -52,7 +76,10 @@ export default function Login() {
           <div className="relative hidden items-center justify-center bg-gradient-to-br from-green-600 to-green-500 p-8 lg:flex">
             <div className="absolute left-6 top-6 grid grid-cols-6 gap-2 opacity-60">
               {Array.from({ length: 12 }).map((_, i) => (
-                <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/70" />
+                <span
+                  key={i}
+                  className="h-1.5 w-1.5 rounded-full bg-white/70"
+                />
               ))}
             </div>
             <div className="absolute bottom-8 right-10 h-5 w-5 rounded-full bg-white/70" />
@@ -60,68 +87,145 @@ export default function Login() {
             <div className="pointer-events-none absolute inset-0 bg-[url('https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&auto=format&fit=crop&q=80')] bg-cover bg-center mix-blend-soft-light opacity-60" />
 
             <div className="max-w-xs text-white">
-              <h1 className="text-5xl font-bold leading-tight">Your Nursery, Simplified</h1>
-              <p className="mt-3 text-lg leading-relaxed text-white/90">Manage your nursery inventory, track purchases, and grow your business with our all-in-one platform</p>
+              <h1 className="text-5xl font-bold leading-tight">
+                Your Nursery, Simplified
+              </h1>
+              <p className="mt-3 text-lg leading-relaxed text-white/90">
+                Manage your nursery inventory, track purchases, and grow your
+                business with our all-in-one platform
+              </p>
             </div>
           </div>
 
           <div className="relative flex-1 flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-6 sm:p-8">
             <div className="absolute -right-16 -top-16 hidden h-32 w-32 rounded-full bg-emerald-200/40 blur-2xl animate-pulse-slow lg:block" />
 
-            <div className="mx-auto w-full max-w-sm">
+            <div
+              className="mx-auto w-full max-w-sm"
+              style={{ marginTop: "-80px" }}
+            >
+              {/* Error Message Container with Fixed Height */}
+              <div className="h-14 mb-2" style={{ marginTop: "30px" }}>
+                {error && (
+                  <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 text-center animate-slideDown">
+                    {error}
+                  </div>
+                )}
+              </div>
+
               {/* Logo */}
               <div className="mb-3 flex justify-center">
                 <div className="h-20 w-20 overflow-hidden rounded-full bg-white shadow-lg ring-2 ring-green-500/20">
-                  <img src="/titleLogo.png" alt="Nursery Logo" className="h-full w-full object-cover" />
+                  <img
+                    src="/titleLogo.png"
+                    alt="Nursery Logo"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
               </div>
 
-              <h2 className="mb-2 text-center text-3xl font-bold text-slate-800">Welcome!</h2>
-              <p className="mb-7 text-center text-base text-green-700">Sign in to continue to your dashboard</p>
+              <h2 className="mb-2 text-center text-3xl font-bold text-slate-800">
+                Welcome!
+              </h2>
+              <p className="mb-7 text-center text-base text-green-700">
+                Sign in to continue to your dashboard
+              </p>
 
               <form onSubmit={onSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Email</label>
+                  <label className="text-sm font-medium text-slate-700">
+                    Email
+                  </label>
                   <div className="relative">
-                    <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Mail
+                      size={16}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => setEmail(e.target.value.toLowerCase())}
                       required
-                      style={{ paddingLeft: '2.5rem' }}
-                      className="h-12 w-full rounded-lg border border-slate-300 bg-white pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                      style={{
+                        paddingLeft: "2.5rem",
+                        fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        fontWeight: "600",
+                      }}
+                      className={`h-12 w-full rounded-lg border pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 ${
+                        showErrorBorder
+                          ? "border-red-500 animate-blinkBorder"
+                          : "border-slate-300 bg-white"
+                      }`}
                       placeholder="Enter your email address"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Password</label>
+                  <label className="text-sm font-medium text-slate-700">
+                    Password
+                  </label>
                   <div className="relative">
-                    <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Lock
+                      size={16}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      style={{ paddingLeft: '2.5rem' }}
-                      className="h-12 w-full rounded-lg border border-slate-300 bg-white pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                      style={{
+                        paddingLeft: "2.5rem",
+                        paddingRight: "2.5rem",
+                        fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
+                        fontWeight: "600",
+                      }}
+                      className={`h-12 w-full rounded-lg border text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 ${
+                        showErrorBorder
+                          ? "border-red-500 animate-blinkBorder"
+                          : "border-slate-300 bg-white"
+                      }`}
                       placeholder="Enter your password"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
 
                 <div className="flex justify-end">
-                  <button type="button" className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline">Forgot password?</button>
+                  <button
+                    type="button"
+                    className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
                 </div>
 
-                <button disabled={loading} className="h-12 w-full rounded-lg bg-green-600 px-4 font-semibold text-base text-white shadow-md shadow-green-600/30 transition hover:bg-green-700 hover:shadow-lg hover:shadow-green-600/40 disabled:opacity-60">
-                  {loading ? 'Signing in...' : 'Login'}
+                <button
+                  disabled={loading}
+                  style={{ marginTop: "12px" }}
+                  className="h-12 w-full rounded-lg bg-green-600 px-4 font-semibold text-base text-white shadow-md shadow-green-600/30 transition hover:bg-green-700 hover:shadow-lg hover:shadow-green-600/40 disabled:opacity-60"
+                >
+                  {loading ? "Signing in..." : "Login"}
                 </button>
 
-                <p className="pt-6 text-center text-sm text-slate-500">
-                  Don't have an account? <Link to="/register" className="font-semibold text-green-600 hover:text-green-700 ">Register</Link>
+                <p
+                  style={{ marginTop: "10px" }}
+                  className="text-center text-sm text-slate-500"
+                >
+                  Don't have an account?{" "}
+                  <Link
+                    to="/register"
+                    className="font-semibold text-green-600 hover:text-green-700 "
+                  >
+                    Register
+                  </Link>
                 </p>
               </form>
             </div>
@@ -129,5 +233,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
+  );
 }

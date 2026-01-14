@@ -13,7 +13,7 @@ export default function RoleRedirect() {
       navigate('/login', { replace: true })
       return
     }
-    if (role === ROLES.SUPERADMIN) navigate('/superadmin', { replace: true })
+    if (role === ROLES.SUPERADMIN) navigate('/superadmin/dashboard', { replace: true })
     else if (role === ROLES.ADMIN) navigate('/admin', { replace: true })
     else navigate('/user', { replace: true })
   }, [user, role, loading, navigate])

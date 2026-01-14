@@ -1,30 +1,30 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
-import toast from 'react-hot-toast'
-import { Mail, Lock, User } from 'lucide-react'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
+import { Mail, Lock, User } from "lucide-react";
 
 export default function Register() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const onSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      await register(email, password, { name })
-      toast.success('Account created')
-      navigate('/dashboard')
+      await register(email, password, { name });
+      toast.success("Account created");
+      navigate("/dashboard");
     } catch (e) {
-      toast.error(e.message || 'Registration failed')
+      toast.error(e.message || "Registration failed");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="relative h-screen overflow-hidden">
@@ -32,9 +32,10 @@ export default function Register() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1597868165956-03a6827955b1?w=1600&auto=format&fit=crop&q=80')",
-          filter: 'blur(5px)',
-          transform: 'scale(1.1)'
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1597868165956-03a6827955b1?w=1600&auto=format&fit=crop&q=80')",
+          filter: "blur(5px)",
+          transform: "scale(1.1)",
         }}
       />
 
@@ -50,7 +51,10 @@ export default function Register() {
           <div className="relative hidden items-center justify-center bg-gradient-to-br from-green-600 to-green-500 p-8 lg:flex">
             <div className="absolute left-6 top-6 grid grid-cols-6 gap-2 opacity-60">
               {Array.from({ length: 12 }).map((_, i) => (
-                <span key={i} className="h-1.5 w-1.5 rounded-full bg-white/70" />
+                <span
+                  key={i}
+                  className="h-1.5 w-1.5 rounded-full bg-white/70"
+                />
               ))}
             </div>
             <div className="absolute bottom-8 right-10 h-5 w-5 rounded-full bg-white/70" />
@@ -58,8 +62,13 @@ export default function Register() {
             <div className="pointer-events-none absolute inset-0 bg-[url('https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=800&auto=format&fit=crop&q=80')] bg-cover bg-center mix-blend-soft-light opacity-60" />
 
             <div className="max-w-xs text-white">
-              <h1 className="text-5xl font-bold leading-tight">Welcome Aboard!</h1>
-              <p className="mt-3 text-base leading-relaxed text-white/90">Create your account and start exploring our nursery management platform</p>
+              <h1 className="text-5xl font-bold leading-tight">
+                Welcome Aboard!
+              </h1>
+              <p className="mt-3 text-base leading-relaxed text-white/90">
+                Create your account and start exploring our nursery management
+                platform
+              </p>
             </div>
           </div>
 
@@ -70,24 +79,37 @@ export default function Register() {
               {/* Logo */}
               <div className="mb-3 flex justify-center">
                 <div className="h-20 w-20 overflow-hidden rounded-full bg-white shadow-lg ring-2 ring-green-500/20">
-                  <img src="/titleLogo.png" alt="Nursery Logo" className="h-full w-full object-cover" />
+                  <img
+                    src="/titleLogo.png"
+                    alt="Nursery Logo"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
               </div>
 
-              <h2 className="mb-2 text-center text-3xl font-bold text-slate-800">Create Account</h2>
-              <p className="mb-7 text-center text-base text-green-700">Join us to get started</p>
+              <h2 className="mb-2 text-center text-3xl font-bold text-slate-800">
+                Create Account
+              </h2>
+              <p className="mb-7 text-center text-base text-green-700">
+                Join us to get started
+              </p>
 
               <form onSubmit={onSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Full Name</label>
+                  <label className="text-sm font-medium text-slate-700">
+                    Full Name
+                  </label>
                   <div className="relative">
-                    <User size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <User
+                      size={16}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
-                      style={{ paddingLeft: '2.5rem' }}
+                      style={{ paddingLeft: "2.5rem" }}
                       className="h-12 w-full rounded-lg border border-slate-300 bg-white pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                       placeholder="Enter your full name"
                     />
@@ -95,15 +117,20 @@ export default function Register() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Email</label>
+                  <label className="text-sm font-medium text-slate-700">
+                    Email
+                  </label>
                   <div className="relative">
-                    <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Mail
+                      size={16}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      style={{ paddingLeft: '2.5rem' }}
+                      style={{ paddingLeft: "2.5rem" }}
                       className="h-12 w-full rounded-lg border border-slate-300 bg-white pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                       placeholder="Enter your email address"
                     />
@@ -111,27 +138,41 @@ export default function Register() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Password</label>
+                  <label className="text-sm font-medium text-slate-700">
+                    Password
+                  </label>
                   <div className="relative">
-                    <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Lock
+                      size={16}
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      style={{ paddingLeft: '2.5rem' }}
+                      style={{ paddingLeft: "2.5rem" }}
                       className="h-12 w-full rounded-lg border border-slate-300 bg-white pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
                       placeholder="Create a password"
                     />
                   </div>
                 </div>
 
-                <button disabled={loading} className="mt-8 h-12 w-full rounded-lg bg-green-600 px-4 font-semibold text-base text-white shadow-md shadow-green-600/30 transition hover:bg-green-700 hover:shadow-lg hover:shadow-green-600/40 disabled:opacity-60">
-                  {loading ? 'Creating account...' : 'Create account'}
+                <button
+                  disabled={loading}
+                  className="mt-8 h-12 w-full rounded-lg bg-green-600 px-4 font-semibold text-base text-white shadow-md shadow-green-600/30 transition hover:bg-green-700 hover:shadow-lg hover:shadow-green-600/40 disabled:opacity-60"
+                >
+                  {loading ? "Creating account..." : "Create account"}
                 </button>
 
                 <p className="mt-5 text-center text-sm text-slate-500">
-                  Already have an account? <Link to="/login" className="font-semibold text-green-600 hover:text-green-700 ">Login</Link>
+                  Already have an account?{" "}
+                  <Link
+                    to="/login"
+                    className="font-semibold text-green-600 hover:text-green-700 "
+                  >
+                    Login
+                  </Link>
                 </p>
               </form>
             </div>
@@ -139,5 +180,5 @@ export default function Register() {
         </div>
       </div>
     </div>
-  )
+  );
 }
