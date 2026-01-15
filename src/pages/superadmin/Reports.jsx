@@ -154,11 +154,17 @@ export default function Reports() {
             </p>
           </div>
           <div className="flex gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <button
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+              style={{ borderRadius: "12px" }}
+            >
               <Printer size={16} />
               <span>Print</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+            <button
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors shadow-sm"
+              style={{ borderRadius: "12px" }}
+            >
               <Download size={16} />
               <span>Export</span>
             </button>
@@ -212,12 +218,7 @@ export default function Reports() {
                 <option>Gujarat</option>
               </select>
             </div>
-            <div className="lg:col-span-3">
-              <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-base font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors shadow-sm">
-                <TrendingUp size={16} />
-                <span>Generate Analysis</span>
-              </button>
-            </div>
+
           </div>
         </div>
 

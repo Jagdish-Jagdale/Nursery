@@ -258,7 +258,7 @@ export default function UsersManage() {
             <h5 className="font-semibold text-gray-900 text-base">Search & Filters</h5>
             <button
               className="flex items-center gap-2 shadow-sm text-sm bg-green-600 text-white px-4 py-2 hover:bg-green-700 transition"
-              style={{ borderRadius: "9999px" }}
+              style={{ borderRadius: "12px" }}
               onClick={handleOpenModal}
             >
               <Plus size={18} />
@@ -679,7 +679,7 @@ export default function UsersManage() {
                   onClick={handleCloseModal}
                   disabled={submitting}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all font-sans"
-                  style={{ borderRadius: "9999px" }}
+                  style={{ borderRadius: "12px" }}
                 >
                   Cancel
                 </button>
@@ -687,7 +687,7 @@ export default function UsersManage() {
                   onClick={handleSubmit}
                   disabled={submitting}
                   className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm border border-transparent font-sans"
-                  style={{ borderRadius: "9999px" }}
+                  style={{ borderRadius: "12px" }}
                 >
                   {submitting ? (
                     <>

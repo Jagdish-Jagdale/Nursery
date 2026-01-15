@@ -46,10 +46,9 @@ const NavItem = ({
       to={to}
       end={end}
       className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors duration-200 rounded-md
-        ${
-          isActive
-            ? "bg-success text-white"
-            : "text-dark hover:bg-gray-100 hover:text-gray-900"
+        ${isActive
+          ? "bg-success text-white"
+          : "text-dark hover:bg-gray-100 hover:text-gray-900"
         }
         ${isSubItem ? "pl-12" : ""}
       `}
@@ -57,7 +56,7 @@ const NavItem = ({
       <Icon size={18} className={`${isActive ? "text-white" : "text-dark"}`} />
       <span className="flex-1">{children}</span>
       {badge && (
-        <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-full bg-success-subtle text-success">
+        <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium rounded-l bg-success-subtle text-success">
           {badge}
         </span>
       )}
@@ -138,9 +137,8 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-white shadow-lg transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:static lg:translate-x-0`}
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-white shadow-lg transition-transform duration-300 ease-in-out lg:translate-x-0 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:static lg:translate-x-0`}
       >
         {/* Sidebar header */}
         <div className="d-flex flex-column align-items-center justify-content-center py-4 border-bottom">

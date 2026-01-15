@@ -221,7 +221,7 @@ export default function ManageAdmins() {
             <h5 className="font-semibold text-gray-900 text-base">Search & Filters</h5>
             <button
               className="flex items-center gap-2 shadow-sm text-sm bg-green-600 text-white px-4 py-2 hover:bg-green-700 transition"
-              style={{ borderRadius: "9999px" }}
+              style={{ borderRadius: "12px" }}
               onClick={handleOpenModal}
             >
               <Plus size={18} />
@@ -430,7 +430,7 @@ export default function ManageAdmins() {
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
                 <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                   <Building className="text-green-600" size={24} />
-                  Add New Nursery Admin
+                  Add Nursery Owner
                 </h3>
                 <button
                   onClick={handleCloseModal}
@@ -540,7 +540,7 @@ export default function ManageAdmins() {
                   onClick={handleCloseModal}
                   disabled={submitting}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all font-sans"
-                  style={{ borderRadius: "9999px" }}
+                  style={{ borderRadius: "12px" }}
                 >
                   Cancel
                 </button>
@@ -548,7 +548,7 @@ export default function ManageAdmins() {
                   onClick={handleSubmit}
                   disabled={submitting}
                   className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm border border-transparent font-sans"
-                  style={{ borderRadius: "9999px" }}
+                  style={{ borderRadius: "12px" }}
                 >
                   {submitting ? (
                     <>
