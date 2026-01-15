@@ -17,6 +17,13 @@ export default function Login() {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/dashboard";
   const submittingRef = useRef(false);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user && !loading) {
+      navigate(from, { replace: true });
+    }
+  }, [user, loading, navigate, from]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -151,11 +158,10 @@ export default function Login() {
                         fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                         fontWeight: "600",
                       }}
-                      className={`h-12 w-full rounded-lg border pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 ${
-                        showErrorBorder
+                      className={`h-12 w-full rounded-lg border pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 ${showErrorBorder
                           ? "border-red-500 animate-blinkBorder"
                           : "border-slate-300 bg-white"
-                      }`}
+                        }`}
                       placeholder="Enter your email address"
                     />
                   </div>
@@ -181,11 +187,10 @@ export default function Login() {
                         fontFamily: "'Inter', 'Segoe UI', 'Roboto', sans-serif",
                         fontWeight: "600",
                       }}
-                      className={`h-12 w-full rounded-lg border text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 ${
-                        showErrorBorder
+                      className={`h-12 w-full rounded-lg border text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 ${showErrorBorder
                           ? "border-red-500 animate-blinkBorder"
                           : "border-slate-300 bg-white"
-                      }`}
+                        }`}
                       placeholder="Enter your password"
                     />
                     <button

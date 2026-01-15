@@ -1,4 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "../../lib/firebase";
 import {
   Search,
   Filter,
@@ -157,125 +164,37 @@ const PERMISSIONS = [
   { id: "tax_settings", label: "Manage Tax Settings", category: "Settings" },
 ];
 
-/* --- Dummy Nursery Owners Data --- */
-const NURSERY_OWNERS = [
-  {
-    id: "nursery-1",
-    name: "Rajesh Kumar",
-    nurseryName: "Green Paradise Nursery",
-    location: "Pune, Maharashtra",
-    email: "rajesh.kumar@greenparadise.in",
-    phone: "+91 98765 43210",
-    status: "active",
-    joinedDate: "Jan 15, 2023",
-    specialization: "Flowering Plants",
-  },
-  {
-    id: "nursery-2",
-    name: "Priya Sharma",
-    nurseryName: "Flora Haven",
-    location: "Bangalore, Karnataka",
-    email: "priya.sharma@florahaven.in",
-    phone: "+91 91234 56789",
-    status: "active",
-    joinedDate: "Mar 22, 2023",
-    specialization: "Indoor Plants",
-  },
-  {
-    id: "nursery-3",
-    name: "Amit Patel",
-    nurseryName: "Nature's Touch Nursery",
-    location: "Ahmedabad, Gujarat",
-    email: "amit.patel@naturesTouch.in",
-    phone: "+91 99887 76655",
-    status: "active",
-    joinedDate: "Feb 10, 2023",
-    specialization: "Medicinal Plants",
-  },
-  {
-    id: "nursery-4",
-    name: "Sneha Deshmukh",
-    nurseryName: "Botanical Gardens & Nursery",
-    location: "Mumbai, Maharashtra",
-    email: "sneha.d@botanicalgardens.in",
-    phone: "+91 88776 65544",
-    status: "active",
-    joinedDate: "Apr 5, 2023",
-    specialization: "Exotic Plants",
-  },
-  {
-    id: "nursery-5",
-    name: "Vikram Singh",
-    nurseryName: "Green Thumb Nursery",
-    location: "Delhi, NCR",
-    email: "vikram.singh@greenthumb.in",
-    phone: "+91 77665 54433",
-    status: "active",
-    joinedDate: "May 18, 2023",
-    specialization: "Fruit Trees",
-  },
-  {
-    id: "nursery-6",
-    name: "Kavita Reddy",
-    nurseryName: "Eco Plants Hub",
-    location: "Hyderabad, Telangana",
-    email: "kavita.reddy@ecoplants.in",
-    phone: "+91 96543 21098",
-    status: "active",
-    joinedDate: "Jun 12, 2023",
-    specialization: "Organic Plants",
-  },
-  {
-    id: "nursery-7",
-    name: "Arjun Menon",
-    nurseryName: "Kerala Garden Center",
-    location: "Kochi, Kerala",
-    email: "arjun.m@keralagarden.in",
-    phone: "+91 95432 10987",
-    status: "inactive",
-    joinedDate: "Jul 8, 2023",
-    specialization: "Tropical Plants",
-  },
-  {
-    id: "nursery-8",
-    name: "Neha Joshi",
-    nurseryName: "Urban Greens",
-    location: "Nagpur, Maharashtra",
-    email: "neha.joshi@urbangreens.in",
-    phone: "+91 94321 09876",
-    status: "active",
-    joinedDate: "Aug 25, 2023",
-    specialization: "Bonsai & Succulents",
-  },
-  {
-    id: "nursery-9",
-    name: "Suresh Reddy",
-    nurseryName: "Agri Green Nursery",
-    location: "Chennai, Tamil Nadu",
-    email: "suresh.r@agrigreen.in",
-    phone: "+91 93210 98765",
-    status: "active",
-    joinedDate: "Sep 14, 2023",
-    specialization: "Vegetable Plants",
-  },
-  {
-    id: "nursery-10",
-    name: "Meera Nair",
-    nurseryName: "Vrindavan Plants",
-    location: "Jaipur, Rajasthan",
-    email: "meera.nair@vrindavanplants.in",
-    phone: "+91 92109 87654",
-    status: "active",
-    joinedDate: "Oct 3, 2023",
-    specialization: "Desert Plants",
-  },
-];
-
 export default function Permissions() {
   const [search, setSearch] = useState("");
   const [selectedNursery, setSelectedNursery] = useState(null);
   const [permissions, setPermissions] = useState({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [nurseryOwners, setNurseryOwners] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOwners = async () => {
+      try {
+        const q = query(
+          collection(db, "owners"),
+          orderBy("createdAt", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const fetchedOwners = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setNurseryOwners(fetchedOwners);
+      } catch (error) {
+        console.error("Error fetching owners:", error);
+        toast.error("Failed to load nursery owners");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOwners();
+  }, []);
 
   // Initialize permissions for selected nursery
   const initializePermissions = (nurseryId) => {
@@ -335,13 +254,13 @@ export default function Permissions() {
     }
   };
 
-  const filteredNurseries = NURSERY_OWNERS.filter(
+  const filteredNurseries = nurseryOwners.filter(
     (nursery) =>
       !search ||
-      nursery.name.toLowerCase().includes(search.toLowerCase()) ||
-      nursery.nurseryName.toLowerCase().includes(search.toLowerCase()) ||
-      nursery.location.toLowerCase().includes(search.toLowerCase()) ||
-      nursery.specialization.toLowerCase().includes(search.toLowerCase())
+      (nursery.ownerName && nursery.ownerName.toLowerCase().includes(search.toLowerCase())) ||
+      (nursery.nurseryName && nursery.nurseryName.toLowerCase().includes(search.toLowerCase())) ||
+      (nursery.email && nursery.email.toLowerCase().includes(search.toLowerCase())) ||
+      (nursery.phone && nursery.phone.includes(search))
   );
 
   // Group permissions by category
@@ -352,18 +271,18 @@ export default function Permissions() {
   }, {});
 
   return (
-    <div className="font-sans min-h-screen p-0 bg-[#f4f6f9]">
-      <div className="w-full px-4 py-3">
+    <div className="min-h-screen p-0 ">
+      <div className="w-full px-4 py-2">
         {/* Header */}
         <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Nursery Access Control & Permissions
-          </h1>
+          <h3 className="text-xl mb-2 text-gray-900 font-extrabold">
+            Owner Permissions
+          </h3>
           <p className="text-base text-gray-600 mb-0 font-normal">
             Manage nursery owner permissions and system access levels
           </p>
         </div>
-        <hr className="mt-4 mb-5 border-gray-200 opacity-10" />
+        <hr className="mt-4 mb-5 border-gray-100" />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-[calc(100vh-180px)]">
           {/* Nursery Owners List */}
@@ -382,54 +301,66 @@ export default function Permissions() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search nurseries..."
-                  className="w-full pl-9 pr-4 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                  className="w-full pl-9 pr-4 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar">
-              {filteredNurseries.map((nursery) => (
-                <div
-                  key={nursery.id}
-                  onClick={() => handleNurserySelect(nursery)}
-                  className={`p-4 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50/80 ${selectedNursery?.id === nursery.id
-                    ? "bg-green-50/50 border-l-4 border-l-green-500"
-                    : "border-l-4 border-l-transparent"
-                    }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${nursery.status === "active"
-                        ? "bg-green-50 text-green-600"
-                        : "bg-gray-100 text-gray-500"
-                        }`}
-                    >
-                      <User size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900 text-base mb-0.5 truncate">
-                        {nursery.name}
+              {loading ? (
+                <div className="flex justify-center items-center h-40">
+                  <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : filteredNurseries.length > 0 ? (
+                filteredNurseries.map((nursery) => (
+                  <div
+                    key={nursery.id}
+                    onClick={() => handleNurserySelect(nursery)}
+                    className={`p-4 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50/80 ${selectedNursery?.id === nursery.id
+                      ? "bg-green-50/50 border-l-4 border-l-green-500"
+                      : "border-l-4 border-l-transparent"
+                      }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${nursery.status === "active"
+                          ? "bg-green-50 text-green-600"
+                          : "bg-gray-100 text-gray-500"
+                          }`}
+                      >
+                        <User size={20} />
                       </div>
-                      <div className="text-sm text-gray-500 mb-1 truncate">
-                        {nursery.nurseryName}
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
-                        <span>{nursery.location}</span>
-                        <div className="flex gap-1.5">
-                          <span className="px-1.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-600">
-                            {nursery.specialization}
-                          </span>
-                          <span className={`px-1.5 py-0.5 rounded border ${nursery.status === "active"
-                            ? "bg-green-50 text-green-700 border-green-100"
-                            : "bg-gray-50 text-gray-600 border-gray-200"
-                            }`}>
-                            {nursery.status}
-                          </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 text-base mb-0.5 truncate">
+                          {nursery.ownerName || nursery.name || "Unknown Owner"}
+                        </div>
+                        <div className="text-sm text-gray-500 mb-1 truncate">
+                          {nursery.nurseryName || "Unknown Nursery"}
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
+                          <span className="truncate max-w-[120px]">{nursery.email || nursery.phone || "-"}</span>
+                          <div className="flex gap-1.5">
+                            <span className="px-1.5 py-0.5 rounded border border-gray-200 bg-gray-50 text-gray-600 truncate max-w-[80px]">
+                              {nursery.location || "N/A"}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded border ${nursery.status === "active"
+                                ? "bg-green-50 text-green-700 border-green-100"
+                                : "bg-gray-50 text-gray-600 border-gray-200"
+                                }`}
+                            >
+                              {nursery.status || "active"}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-gray-500 text-sm">
+                  No nurseries found.
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -440,17 +371,18 @@ export default function Permissions() {
                 <div className="p-4 border-b border-gray-100 bg-white flex justify-between items-start sticky top-0 z-10">
                   <div>
                     <h6 className="mb-1 font-semibold text-base text-gray-900">
-                      Permissions for {selectedNursery.name}
+                      Permissions for {selectedNursery.ownerName || selectedNursery.name || "Owner"}
                     </h6>
                     <p className="text-sm text-gray-500 mb-0">
-                      {selectedNursery.nurseryName} • {selectedNursery.location}
+                      {selectedNursery.nurseryName} • {selectedNursery.location || selectedNursery.email || "No Location"}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleReset}
                       disabled={!hasChanges}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-full hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      style={{ borderRadius: "12px" }}
                     >
                       <RotateCcw size={14} />
                       Reset
@@ -458,7 +390,8 @@ export default function Permissions() {
                     <button
                       onClick={handleSave}
                       disabled={!hasChanges}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                      style={{ borderRadius: "12px" }}
                     >
                       <Save size={14} />
                       Save Changes
@@ -490,21 +423,30 @@ export default function Permissions() {
                                 <div className="text-base font-medium text-gray-900">
                                   {perm.label}
                                 </div>
-                                <div className="text-xs text-gray-400 font-mono mt-0.5">
-                                  {perm.id}
-                                </div>
+
                               </div>
-                              <button
+                              <div
+                                role="switch"
+                                aria-checked={isChecked}
+                                tabIndex={0}
                                 onClick={() => togglePermission(perm.id)}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/20 ${isChecked ? 'bg-green-600' : 'bg-gray-200'
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    togglePermission(perm.id);
+                                  }
+                                }}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${isChecked ? 'bg-blue-600' : 'bg-gray-200'
                                   }`}
+                                style={{ borderRadius: "9999px" }}
                               >
                                 <span className="sr-only">Enable {perm.label}</span>
                                 <span
                                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isChecked ? 'translate-x-6' : 'translate-x-1'
                                     }`}
+                                  style={{ borderRadius: "50%" }}
                                 />
-                              </button>
+                              </div>
                             </div>
                           );
                         })}

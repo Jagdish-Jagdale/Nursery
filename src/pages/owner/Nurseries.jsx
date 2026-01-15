@@ -73,11 +73,14 @@ export default function Nurseries() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="w-full h-full bg-white py-2 px-4 font-['Inter',sans-serif]">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Manage Nurseries</h1>
-          <p className="text-slate-500 text-sm">Add or update your nursery locations.</p>
+          <h3 className="text-xl mb-2 text-gray-900 font-extrabold">Manage Nurseries</h3>
+          <p className="text-base text-gray-600 mb-0 font-normal">
+            Add or update your nursery locations.
+          </p>
+          <hr className="mt-4 border-gray-100 opacity-50" />
         </div>
         <Button onClick={() => { setEditing(null); setShowForm(true) }}>
           <Plus size={18} className="mr-2" /> Add Nursery
@@ -91,39 +94,41 @@ export default function Nurseries() {
         </div>
       )}
 
-      <Table headers={['Image', 'Name', 'City', 'Actions']}>
-        {loading ? (
-          <TableRow><TableCell className="text-center py-8" colSpan={4}>Loading nurseries...</TableCell></TableRow>
-        ) : items.length ? (
-          items.map((n) => (
-            <TableRow key={n.id}>
-              <TableCell>
-                {n.imageUrl ? (
-                  <img src={n.imageUrl} alt="nursery" className="h-12 w-12 rounded-lg object-cover border border-slate-100 shadow-sm" />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                    <Sprout size={20} />
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <Table headers={['Image', 'Name', 'City', 'Actions']}>
+          {loading ? (
+            <TableRow><TableCell className="text-center py-8" colSpan={4}>Loading nurseries...</TableCell></TableRow>
+          ) : items.length ? (
+            items.map((n) => (
+              <TableRow key={n.id}>
+                <TableCell>
+                  {n.imageUrl ? (
+                    <img src={n.imageUrl} alt="nursery" className="h-12 w-12 rounded-lg object-cover border border-slate-100 shadow-sm" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                      <Sprout size={20} />
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell><span className="font-medium text-slate-700">{n.name}</span></TableCell>
+                <TableCell>{n.city}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Button variant="secondary" size="sm" onClick={() => { setEditing(n); setShowForm(true) }}>
+                      <Pencil size={14} className="mr-1" /> Edit
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => remove(n.id)}>
+                      <Trash2 size={14} className="mr-1" /> Delete
+                    </Button>
                   </div>
-                )}
-              </TableCell>
-              <TableCell><span className="font-medium text-slate-700">{n.name}</span></TableCell>
-              <TableCell>{n.city}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => { setEditing(n); setShowForm(true) }}>
-                    <Pencil size={14} className="mr-1" /> Edit
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={() => remove(n.id)}>
-                    <Trash2 size={14} className="mr-1" /> Delete
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))
-        ) : (
-          <TableRow><TableCell className="text-center py-8 text-slate-400" colSpan={4}>No nurseries found. Click "Add Nursery" to create one.</TableCell></TableRow>
-        )}
-      </Table>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow><TableCell className="text-center py-8 text-slate-400" colSpan={4}>No nurseries found. Click "Add Nursery" to create one.</TableCell></TableRow>
+          )}
+        </Table>
+      </div>
     </div>
   )
 }

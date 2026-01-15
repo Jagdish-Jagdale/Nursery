@@ -6,7 +6,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { ROLES } from "../utils/roles";
 
 const AuthContext = createContext(null);
@@ -26,19 +26,30 @@ export function AuthProvider({ children }) {
       }
       setUser(u);
       try {
-        const ref = doc(db, "users", u.uid);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const data = snap.data();
-          // If no role defined, treat as SUPERADMIN
-          setRole(data.role || ROLES.SUPERADMIN);
+        // First check users collection
+        const userRef = doc(db, "users", u.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          setRole(data.role || ROLES.ADMIN);
         } else {
-          // Don't create user document during login
-          // Users without Firestore document are treated as SUPERADMIN
-          setRole(ROLES.SUPERADMIN);
+          // If not in users collection, check owners collection
+          const ownersQuery = query(collection(db, "owners"), where("uid", "==", u.uid));
+          const ownersSnap = await getDocs(ownersQuery);
+
+          if (!ownersSnap.empty) {
+            // User is an owner - set role directly without creating user doc
+            // (Creating user doc here would trigger infinite loop)
+            setRole(ROLES.OWNER);
+          } else {
+            // Default to ADMIN for users without documents
+            setRole(ROLES.ADMIN);
+          }
         }
       } catch (e) {
-        setRole(ROLES.SUPERADMIN);
+        console.error("Error fetching user role:", e);
+        setRole(ROLES.ADMIN);
       } finally {
         setLoading(false);
       }
@@ -75,7 +86,8 @@ export function AuthProvider({ children }) {
       register,
       logout,
       isAdmin: role === ROLES.ADMIN,
-      isSuperAdmin: role === ROLES.SUPERADMIN,
+      isOwner: role === ROLES.OWNER,
+      isSuperAdmin: role === ROLES.ADMIN, // Alias for backward compatibility
     }),
     [user, role, loading]
   );

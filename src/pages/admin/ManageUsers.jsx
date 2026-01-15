@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  where,
   addDoc,
   serverTimestamp,
+  where,
+  collection,
+  getDocs,
+  query,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { db, auth } from "../../lib/firebase";
@@ -14,6 +15,7 @@ import { ROLES } from "../../utils/roles";
 import toast from "react-hot-toast";
 import {
   Search,
+  Filter,
   Plus,
   MoreVertical,
   Edit2,
@@ -29,17 +31,24 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export default function ManageAdmins() {
+// Keep dummy users if database is empty or fetch fails
+
+
+export default function UsersManage() {
   const [users, setUsers] = useState([]);
+  const [nurseries, setNurseries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    nurseryName: "",
-    ownerName: "",
-    email: "",
+    userName: "",
     phone: "",
+    email: "",
+    address: "",
+    nurseryId: "",
+    nurseryName: "",
     password: "",
   });
 
@@ -47,26 +56,39 @@ export default function ManageAdmins() {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Reset page when search changes
+  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, roleFilter]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const q = query(
-          collection(db, "admins")
+        // Fetch All Users
+        // Fetch All Users
+        const usersQuery = query(
+          collection(db, "users")
         );
-        const snap = await getDocs(q);
-        const adminUsers = snap.docs
+        const usersSnap = await getDocs(usersQuery);
+        const realUsers = usersSnap.docs
           .map((d) => ({ id: d.id, ...d.data() }))
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setUsers(adminUsers);
+        setUsers(realUsers);
+
+        // Fetch Nurseries (Owners)
+        const nurseriesQuery = query(
+          collection(db, "owners")
+        );
+        const nurseriesSnap = await getDocs(nurseriesQuery);
+        const nurseriesList = nurseriesSnap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+        setNurseries(nurseriesList);
       } catch (e) {
         console.error(e);
-        toast.error("Failed to load admin users");
+        toast.error("Failed to load data from database");
       } finally {
         setLoading(false);
       }
@@ -74,12 +96,24 @@ export default function ManageAdmins() {
     load();
   }, []);
 
+  const changeRole = async (id, role) => {
+    try {
+      await updateDoc(doc(db, "users", id), { role });
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
+      toast.success("Role updated");
+    } catch (e) {
+      toast.error("Failed to update role");
+    }
+  };
+
   const handleOpenModal = () => {
     setFormData({
-      nurseryName: "",
-      ownerName: "",
-      email: "",
+      userName: "",
       phone: "",
+      email: "",
+      address: "",
+      nurseryId: "",
+      nurseryName: "",
       password: "",
     });
     setShowModal(true);
@@ -112,10 +146,10 @@ export default function ManageAdmins() {
     e.preventDefault();
 
     if (
-      !formData.nurseryName ||
-      !formData.ownerName ||
+      !formData.userName ||
       !formData.email ||
-      !formData.password
+      !formData.password ||
+      !formData.nurseryId
     ) {
       toast.error("Please fill in all required fields");
       return;
@@ -145,48 +179,51 @@ export default function ManageAdmins() {
         formData.password
       );
 
-      await addDoc(collection(db, "admins"), {
+      await addDoc(collection(db, "users"), {
         uid: userCredential.user.uid,
-        nurseryName: formData.nurseryName,
-        ownerName: formData.ownerName,
+        userName: formData.userName,
         email: formData.email,
         phone: formData.phone || "",
-        role: ROLES.ADMIN,
+        address: formData.address || "",
+        nurseryId: formData.nurseryId,
+        nurseryName: formData.nurseryName,
+        role: ROLES.USER,
         createdAt: serverTimestamp(),
         status: "active",
       });
 
-      toast.success("Admin added successfully!");
+      toast.success("User added successfully!");
       handleCloseModal();
 
       // Reload users
-      const q = query(
-        collection(db, "admins")
-      );
+      // Reload users
+      const q = query(collection(db, "users"));
       const snap = await getDocs(q);
-      const adminUsers = snap.docs
+      const realUsers = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setUsers(adminUsers);
+      setUsers([...realUsers]);
     } catch (error) {
       console.error("Error:", error);
       if (error.code === "auth/email-already-in-use") {
         toast.error("Email already in use");
       } else {
-        toast.error("Failed to add admin");
+        toast.error("Failed to add user");
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
       !search ||
-      (u.nurseryName && u.nurseryName.toLowerCase().includes(search.toLowerCase())) ||
-      (u.ownerName && u.ownerName.toLowerCase().includes(search.toLowerCase())) ||
-      (u.email && u.email.toLowerCase().includes(search.toLowerCase()))
-  );
+      (u.userName && u.userName.toLowerCase().includes(search.toLowerCase())) ||
+      (u.email && u.email.toLowerCase().includes(search.toLowerCase()));
+    const matchesRole =
+      roleFilter === "all" || (u.role || ROLES.USER) === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
@@ -200,37 +237,37 @@ export default function ManageAdmins() {
   };
 
   return (
-    <div className="font-sans min-h-screen p-0 bg-[#f4f6f9]">
-      <div className="w-full px-4 py-3">
+    <div className="font-sans min-h-screen p-0">
+      <div className="w-full px-4 py-2">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Manage Admins
-            </h1>
-            <div className="text-base text-gray-600 font-normal">
-              Nursery Administration
-            </div>
+            <h3 className="text-xl mb-2 text-gray-900 font-extrabold">
+              Manage Users
+            </h3>
+            <p className="text-base text-gray-600 font-normal mb-0">
+              User Administration
+            </p>
           </div>
         </div>
-        <hr className="mt-4 mb-5 border-gray-200 opacity-10" />
+        <hr className="mt-4 mb-5 border-gray-100" />
 
-        {/* Search */}
+        {/* Search & Filters */}
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-3">
           <div className="flex justify-between items-center mb-4">
             <h5 className="font-semibold text-gray-900 text-base">Search & Filters</h5>
             <button
-              className="flex items-center gap-2 shadow-sm text-sm bg-green-600 text-white px-4 py-2 hover:bg-green-700 transition"
+              className="flex items-center gap-2 shadow-sm text-sm bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition"
               style={{ borderRadius: "12px" }}
               onClick={handleOpenModal}
             >
               <Plus size={18} />
-              <span>Add Admin</span>
+              <span>Add User</span>
             </button>
           </div>
           <hr className="mt-0 mb-4 border-gray-200 opacity-10" />
           <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <div className="md:col-span-8 relative">
+            <div className="md:col-span-5 relative">
               <Search
                 className="absolute text-gray-400 left-3 top-1/2 -translate-y-1/2"
                 size={18}
@@ -239,10 +276,26 @@ export default function ManageAdmins() {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name or email..."
-                className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                placeholder="Search by name, email or phone..."
+                className="w-full pl-10 pr-4 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
+
+            <div className="md:col-span-3 relative">
+              <Filter className="absolute text-gray-400 left-3 top-1/2 -translate-y-1/2" size={16} />
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer bg-white"
+              >
+                <option value="all">All Roles</option>
+                <option value={ROLES.ADMIN}>Admin</option>
+                <option value={ROLES.OWNER}>Nursery Owner</option>
+                <option value={ROLES.USER}>User</option>
+              </select>
+            </div>
+
+
 
             <div className="md:col-span-4 flex justify-end items-center gap-4">
               <div className="flex items-center gap-2">
@@ -253,7 +306,7 @@ export default function ManageAdmins() {
                     setRowsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-1.5"
+                  className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5"
                 >
                   {[5, 10, 25, 50].map((pageSize) => (
                     <option key={pageSize} value={pageSize}>
@@ -285,37 +338,37 @@ export default function ManageAdmins() {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Users Table */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-100 border-b border-gray-200">
+              <thead className="bg-gray-50/50 border-b border-gray-100">
                 <tr>
-                  <th className="py-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-[60px]">
+                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider w-[60px]">
                     SR NO
                   </th>
-                  <th className="py-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    NURSERY / ADMIN
+                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider">
+                    NURSERY / USER
                   </th>
-                  <th className="py-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider">
                     CONTACT
                   </th>
-                  <th className="py-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider">
                     ROLE
                   </th>
-                  <th className="py-4 px-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">
+                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">
                     ACTIONS
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-50">
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="text-center py-8">
                       <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                         <span className="text-sm text-gray-500 font-medium">
-                          Loading admin data...
+                          Loading user data...
                         </span>
                       </div>
                     </td>
@@ -324,27 +377,54 @@ export default function ManageAdmins() {
                   paginatedUsers.map((u, index) => (
                     <tr
                       key={u.id}
-                      className="group odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors border-b border-gray-100 last:border-0"
+                      className="group hover:bg-gray-50/50 transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm text-gray-500 font-medium">
+                      <td className="px-4 py-3 text-base text-gray-500 font-medium">
                         {String(startIndex + index + 1).padStart(2, "0")}
                       </td>
 
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center shadow-sm bg-green-50 text-green-600">
-                            <Trees size={20} />
+                          <div
+                            className={`w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center shadow-sm ${(u.role || ROLES.USER) === ROLES.OWNER
+                              ? "bg-green-50 text-green-600"
+                              : "bg-gray-100 text-gray-500"
+                              }`}
+                          >
+                            {(u.role || ROLES.USER) === ROLES.OWNER ? (
+                              <Trees size={20} />
+                            ) : u.userName ? (
+                              <span className="font-semibold">{u.userName.charAt(0).toUpperCase()}</span>
+                            ) : (
+                              <User size={18} />
+                            )}
                           </div>
                           <div className="min-w-0">
-                            <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-0.5">
                               <span className="text-base font-semibold text-gray-900 truncate max-w-[200px]">
-                                {u.nurseryName || u.name?.split(" - ")[0] || "Unknown Nursery"}
+                                {u.userName || "Unknown User"}
                               </span>
-                              <span className="text-sm text-gray-400 truncate max-w-[200px] font-medium">
-                                {u.ownerName || u.name?.split(" - ")[1] || "Admin"}
+                              {(u.role || ROLES.USER) === ROLES.ADMIN && (
+                                <span className="px-1.5 py-0.5 text-[10px] font-bold text-purple-600 bg-purple-50 border border-purple-100 rounded">
+                                  ADMIN
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-500 flex items-center gap-1">
+                              <span>
+                                Created:{" "}
+                                {u.createdAt
+                                  ? new Date(u.createdAt).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    }
+                                  )
+                                  : "N/A"}
                               </span>
                             </div>
-
                           </div>
                         </div>
                       </td>
@@ -367,9 +447,34 @@ export default function ManageAdmins() {
                       </td>
 
                       <td className="px-4 py-3">
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-semibold bg-green-50 text-green-700 border border-green-100/50">
-                          <Shield size={12} />
-                          <span>Admin</span>
+                        <div className="flex flex-col gap-2 items-start">
+                          <div
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-semibold ${(u.role || ROLES.USER) === ROLES.OWNER
+                              ? "bg-green-50 text-green-700 border border-green-100"
+                              : (u.role || ROLES.USER) === ROLES.ADMIN
+                                ? "bg-purple-50 text-purple-700 border border-purple-100"
+                                : "bg-blue-50 text-blue-700 border border-blue-100"
+                              }`}
+                          >
+                            <Shield size={12} />
+                            <span>
+                              {u.role === ROLES.OWNER
+                                ? "Owner"
+                                : u.role || "User"}
+                            </span>
+                          </div>
+
+                          <select
+                            value={u.role || ROLES.USER}
+                            onChange={(e) => changeRole(u.id, e.target.value)}
+                            className="bg-transparent text-sm text-gray-500 border-none p-0 pr-6 cursor-pointer focus:ring-0 hover:text-gray-700"
+                          >
+                            <option value={ROLES.USER}>Switch to User</option>
+                            <option value={ROLES.OWNER}>Switch to Nursery Owner</option>
+                            <option value={ROLES.ADMIN}>
+                              Switch to Admin
+                            </option>
+                          </select>
                         </div>
                       </td>
 
@@ -377,13 +482,13 @@ export default function ManageAdmins() {
                         <div className="flex justify-end gap-1 opacity-100 group-hover:opacity-100 transition-opacity">
                           <button
                             className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Edit Admin"
+                            title="Edit User"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete Admin"
+                            title="Delete User"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -405,7 +510,7 @@ export default function ManageAdmins() {
                           <User size={32} className="opacity-50" />
                         </div>
                         <p className="text-sm font-medium">
-                          No admins found matching your search.
+                          No users found matching your search.
                         </p>
                       </div>
                     </td>
@@ -429,8 +534,8 @@ export default function ManageAdmins() {
               {/* Modal Header */}
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
                 <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <Building className="text-green-600" size={24} />
-                  Add Nursery Owner
+                  <User className="text-green-600" size={24} />
+                  Add New User
                 </h3>
                 <button
                   onClick={handleCloseModal}
@@ -444,52 +549,18 @@ export default function ManageAdmins() {
               <div className="p-6 overflow-y-auto max-h-[80vh]">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Nursery Name */}
+                    {/* Name */}
                     <div className="space-y-1.5">
                       <label className="text-base font-medium text-gray-700 block">
-                        Nursery Name <span className="text-red-500">*</span>
+                        Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        name="nurseryName"
-                        value={formData.nurseryName}
+                        name="userName"
+                        value={formData.userName}
                         onChange={handleInputChange}
-                        placeholder="Enter nursery name"
-                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all placeholder:text-gray-400"
-                        disabled={submitting}
-                        required
-                      />
-                    </div>
-
-                    {/* Owner Name */}
-                    <div className="space-y-1.5">
-                      <label className="text-base font-medium text-gray-700 block">
-                        Owner Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="ownerName"
-                        value={formData.ownerName}
-                        onChange={handleInputChange}
-                        placeholder="Enter owner name"
-                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all placeholder:text-gray-400"
-                        disabled={submitting}
-                        required
-                      />
-                    </div>
-
-                    {/* Email */}
-                    <div className="space-y-1.5">
-                      <label className="text-base font-medium text-gray-700 block">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        placeholder="Enter email"
-                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all placeholder:text-gray-400"
+                        placeholder="Enter user name"
+                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
                         disabled={submitting}
                         required
                       />
@@ -506,13 +577,79 @@ export default function ManageAdmins() {
                         value={formData.phone}
                         onChange={handleInputChange}
                         placeholder="+91 98765 43210"
-                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all placeholder:text-gray-400"
+                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
                         disabled={submitting}
                       />
                     </div>
 
+                    {/* Email */}
+                    <div className="space-y-1.5">
+                      <label className="text-base font-medium text-gray-700 block">
+                        Email <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="Enter email"
+                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                        disabled={submitting}
+                        required
+                      />
+                    </div>
+
+                    {/* Address */}
+                    <div className="space-y-1.5">
+                      <label className="text-base font-medium text-gray-700 block">
+                        Address
+                      </label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Enter address"
+                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                        disabled={submitting}
+                      />
+                    </div>
+
+                    {/* Nursery Name Dropdown */}
+                    <div className="space-y-1.5">
+                      <label className="text-base font-medium text-gray-700 block">
+                        Nursery Name <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="nurseryId"
+                        value={formData.nurseryId}
+                        onChange={(e) => {
+                          const selectedNursery = nurseries.find(
+                            (n) => n.id === e.target.value
+                          );
+                          setFormData((prev) => ({
+                            ...prev,
+                            nurseryId: e.target.value,
+                            nurseryName: selectedNursery
+                              ? selectedNursery.nurseryName || selectedNursery.name
+                              : "",
+                          }));
+                        }}
+                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white"
+                        disabled={submitting}
+                        required
+                      >
+                        <option value="">Select a Nursery</option>
+                        {nurseries.map((nursery) => (
+                          <option key={nursery.id} value={nursery.id}>
+                            {nursery.nurseryName || nursery.name || "Unknown Nursery"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
                     {/* Password */}
-                    <div className="col-span-1 md:col-span-2 space-y-1.5">
+                    <div className="space-y-1.5">
                       <label className="text-base font-medium text-gray-700 block">
                         Password <span className="text-red-500">*</span>
                       </label>
@@ -522,12 +659,14 @@ export default function ManageAdmins() {
                         value={formData.password}
                         onChange={handleInputChange}
                         placeholder="Enter password (min 6 characters)"
-                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all placeholder:text-gray-400"
+                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
                         disabled={submitting}
                         required
                         minLength={6}
                       />
-                      <p className="text-xs text-gray-500">Password must be at least 6 characters</p>
+                      <p className="text-xs text-gray-500">
+                        Password must be at least 6 characters
+                      </p>
                     </div>
                   </div>
                 </form>
@@ -547,7 +686,7 @@ export default function ManageAdmins() {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm border border-transparent font-sans"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm border border-transparent font-sans"
                   style={{ borderRadius: "12px" }}
                 >
                   {submitting ? (
@@ -558,7 +697,7 @@ export default function ManageAdmins() {
                   ) : (
                     <>
                       <Plus size={18} />
-                      <span>Add Admin</span>
+                      <span>Add User</span>
                     </>
                   )}
                 </button>

@@ -155,7 +155,7 @@ export default function Sidebar() {
               </div>
             </div>
             <h4 className="fw-bold text-dark mb-1">Nursery</h4>
-            <small className="text-muted">Superadmin</small>
+            <small className="text-muted">Admin</small>
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}

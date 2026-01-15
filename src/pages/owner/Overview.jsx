@@ -27,7 +27,7 @@ const pieData = [
 
 const COLORS = ['#10b981', '#f59e0b', '#64748b']
 
-export default function AdminOverview() {
+export default function OwnerOverview() {
   const { user } = useAuth()
   const [stats, setStats] = useState({ nurseries: 0, sugarcanes: 0, orders: 0 })
 
@@ -46,13 +46,17 @@ export default function AdminOverview() {
   }, [user])
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Dashboard Overview</h1>
-        <p className="text-slate-500 mt-2">Welcome back, here's what's happening today.</p>
+    <div className="w-full h-full bg-white py-2 px-4 font-['Inter',sans-serif]">
+      {/* Header */}
+      <div className="mb-6">
+        <h3 className="text-xl mb-2 text-gray-900 font-extrabold">Dashboard Overview</h3>
+        <p className="text-base text-gray-600 mb-0 font-normal">
+          Welcome back, here's what's happening today.
+        </p>
+        <hr className="mt-4 border-gray-100 opacity-50" />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-6">
         <StatsCard
           title="Total Nurseries"
           value={stats.nurseries}
@@ -74,9 +78,10 @@ export default function AdminOverview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2" title="Sales Trends">
+        <div className="lg:col-span-2 h-full shadow-sm rounded-2xl bg-white border border-gray-200 p-5">
+          <h5 className="mb-4 font-bold text-gray-900 text-base">Sales Trends</h5>
           <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={data}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
@@ -88,7 +93,12 @@ export default function AdminOverview() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
                 <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    border: "none",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    borderRadius: "8px",
+                  }}
                 />
                 <Area
                   type="monotone"
@@ -101,11 +111,12 @@ export default function AdminOverview() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </div>
 
-        <Card title="Stock Distribution">
+        <div className="h-full shadow-sm rounded-2xl bg-white border border-gray-200 p-5">
+          <h5 className="mb-4 font-bold text-gray-900 text-base">Stock Distribution</h5>
           <div className="h-[300px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
                   data={pieData}
@@ -126,7 +137,7 @@ export default function AdminOverview() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   )
@@ -134,19 +145,21 @@ export default function AdminOverview() {
 
 function StatsCard({ title, value, icon, trend }) {
   return (
-    <Card className="flex items-start justify-between">
-      <div>
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <h3 className="mt-2 text-3xl font-bold text-slate-800">{value}</h3>
-        <p className="mt-2 flex items-center text-sm text-emerald-600 font-medium">
-          <TrendingUp size={16} className="mr-1" />
-          {trend}
-          <span className="ml-1 text-slate-400 font-normal">from last month</span>
-        </p>
+    <div className="h-full shadow-sm rounded-2xl bg-white border border-gray-200 p-5 hover:shadow-md transition-all">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-slate-500">{title}</p>
+          <h3 className="mt-2 text-3xl font-bold text-slate-800">{value}</h3>
+          <p className="mt-2 flex items-center text-sm text-emerald-600 font-medium">
+            <TrendingUp size={16} className="mr-1" />
+            {trend}
+            <span className="ml-1 text-slate-400 font-normal">from last month</span>
+          </p>
+        </div>
+        <div className="rounded-full border border-gray-100 bg-white p-3">
+          {icon}
+        </div>
       </div>
-      <div className="rounded-xl bg-emerald-50 p-3">
-        {icon}
-      </div>
-    </Card>
+    </div>
   )
 }
