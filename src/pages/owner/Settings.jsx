@@ -142,11 +142,11 @@ export default function OwnerSettings() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 mb-6 border-b border-gray-200">
+                <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-xl w-fit">
                     <button
                         onClick={() => setActiveTab("profile")}
-                        className={`px-6 py-3 font-medium transition-all ${activeTab === "profile"
-                            ? "text-green-600 border-b-2 border-green-600"
+                        className={`px-6 py-2.5 font-medium transition-all rounded-lg ${activeTab === "profile"
+                            ? "bg-white text-green-600 shadow-sm"
                             : "text-gray-600 hover:text-gray-900"
                             }`}
                     >
@@ -157,8 +157,8 @@ export default function OwnerSettings() {
                     </button>
                     <button
                         onClick={() => setActiveTab("nursery")}
-                        className={`px-6 py-3 font-medium transition-all ${activeTab === "nursery"
-                            ? "text-green-600 border-b-2 border-green-600"
+                        className={`px-6 py-2.5 font-medium transition-all rounded-lg ${activeTab === "nursery"
+                            ? "bg-white text-green-600 shadow-sm"
                             : "text-gray-600 hover:text-gray-900"
                             }`}
                     >
@@ -169,8 +169,8 @@ export default function OwnerSettings() {
                     </button>
                     <button
                         onClick={() => setActiveTab("password")}
-                        className={`px-6 py-3 font-medium transition-all ${activeTab === "password"
-                            ? "text-green-600 border-b-2 border-green-600"
+                        className={`px-6 py-2.5 font-medium transition-all rounded-lg ${activeTab === "password"
+                            ? "bg-white text-green-600 shadow-sm"
                             : "text-gray-600 hover:text-gray-900"
                             }`}
                     >

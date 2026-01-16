@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, query, where, doc, onSnapshot } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import { useAuth } from '../../contexts/AuthContext'
 import Card from '../../components/common/Card'
-import { Trees, Sprout, ShoppingBag, TrendingUp, Users } from 'lucide-react'
+import { Trees, Sprout, ShoppingBag, TrendingUp, TrendingDown, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -29,7 +29,21 @@ const COLORS = ['#10b981', '#f59e0b', '#64748b']
 
 export default function OwnerOverview() {
   const { user } = useAuth()
+  const [ownerName, setOwnerName] = useState('')
   const [stats, setStats] = useState({ nurseries: 0, sugarcanes: 0, orders: 0 })
+
+  // Fetch owner name in real-time
+  useEffect(() => {
+    if (!user) return
+
+    const unsubscribe = onSnapshot(doc(db, "owners", user.uid), (docSnap) => {
+      if (docSnap.exists()) {
+        setOwnerName(docSnap.data().ownerName || "Owner")
+      }
+    })
+
+    return () => unsubscribe()
+  }, [user])
 
   useEffect(() => {
     if (!user) return
@@ -45,13 +59,20 @@ export default function OwnerOverview() {
     load()
   }, [user])
 
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return "Good Morning"
+    if (hour < 18) return "Good Afternoon"
+    return "Good Evening"
+  }
+
   return (
-    <div className="w-full h-full bg-white py-2 px-4 font-['Inter',sans-serif]">
+    <div className="w-full h-full bg-gradient-to-br from-gray-50 to-white py-2 px-4 font-['Inter',sans-serif]">
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-xl mb-2 text-gray-900 font-extrabold">Dashboard Overview</h3>
+        <h3 className="text-2xl mb-2 text-gray-900 font-extrabold">{getGreeting()}, {ownerName}! 👋</h3>
         <p className="text-base text-gray-600 mb-0 font-normal">
-          Welcome back, here's what's happening today.
+          Here's a comprehensive overview of your nursery business.
         </p>
         <hr className="mt-4 border-gray-100 opacity-50" />
       </div>
@@ -60,45 +81,56 @@ export default function OwnerOverview() {
         <StatsCard
           title="Total Nurseries"
           value={stats.nurseries}
-          icon={<Trees size={24} className="text-emerald-600" />}
+          icon={<Trees size={24} className="text-white" />}
           trend="+12%"
+          trendUp={true}
+          gradient="from-emerald-500 to-green-600"
         />
         <StatsCard
           title="Inventory Items"
           value={stats.sugarcanes}
-          icon={<Sprout size={24} className="text-emerald-600" />}
+          icon={<Sprout size={24} className="text-white" />}
           trend="+5%"
+          trendUp={true}
+          gradient="from-blue-500 to-indigo-600"
         />
         <StatsCard
           title="Active Orders"
           value={stats.orders}
-          icon={<ShoppingBag size={24} className="text-emerald-600" />}
+          icon={<ShoppingBag size={24} className="text-white" />}
           trend="+18%"
+          trendUp={true}
+          gradient="from-purple-500 to-pink-600"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 h-full shadow-sm rounded-2xl bg-white border border-gray-200 p-5">
-          <h5 className="mb-4 font-bold text-gray-900 text-base">Sales Trends</h5>
+        <div className="lg:col-span-2 h-full shadow-lg rounded-2xl bg-white border border-gray-200 p-6 hover:shadow-xl transition-shadow">
+          <div className="mb-4">
+            <h5 className="font-bold text-gray-900 text-lg mb-1">Sales Performance</h5>
+            <p className="text-sm text-gray-500">Monthly sales trend analysis</p>
+          </div>
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={data}>
                 <defs>
                   <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#fff",
                     border: "none",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                    borderRadius: "8px",
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                    borderRadius: "12px",
+                    padding: "12px",
                   }}
+                  labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
                 />
                 <Area
                   type="monotone"
@@ -106,15 +138,18 @@ export default function OwnerOverview() {
                   stroke="#10b981"
                   fillOpacity={1}
                   fill="url(#colorSales)"
-                  strokeWidth={2}
+                  strokeWidth={3}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="h-full shadow-sm rounded-2xl bg-white border border-gray-200 p-5">
-          <h5 className="mb-4 font-bold text-gray-900 text-base">Stock Distribution</h5>
+        <div className="h-full shadow-lg rounded-2xl bg-white border border-gray-200 p-6 hover:shadow-xl transition-shadow">
+          <div className="mb-4">
+            <h5 className="font-bold text-gray-900 text-lg mb-1">Stock Distribution</h5>
+            <p className="text-sm text-gray-500">Inventory breakdown by category</p>
+          </div>
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -123,7 +158,7 @@ export default function OwnerOverview() {
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
-                  outerRadius={80}
+                  outerRadius={90}
                   fill="#8884d8"
                   paddingAngle={5}
                   dataKey="value"
@@ -132,8 +167,21 @@ export default function OwnerOverview() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" height={36} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    border: "none",
+                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                    borderRadius: "12px",
+                    padding: "12px",
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '14px', paddingTop: '10px' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -143,21 +191,28 @@ export default function OwnerOverview() {
   )
 }
 
-function StatsCard({ title, value, icon, trend }) {
+function StatsCard({ title, value, icon, trend, trendUp, gradient }) {
   return (
-    <div className="h-full shadow-sm rounded-2xl bg-white border border-gray-200 p-5 hover:shadow-md transition-all">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <h3 className="mt-2 text-3xl font-bold text-slate-800">{value}</h3>
-          <p className="mt-2 flex items-center text-sm text-emerald-600 font-medium">
-            <TrendingUp size={16} className="mr-1" />
-            {trend}
-            <span className="ml-1 text-slate-400 font-normal">from last month</span>
-          </p>
-        </div>
-        <div className="rounded-full border border-gray-100 bg-white p-3">
-          {icon}
+    <div className={`relative overflow-hidden h-full shadow-lg rounded-2xl bg-gradient-to-br ${gradient} p-6 hover:shadow-xl transition-all transform hover:scale-[1.02] group cursor-pointer`}>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform"></div>
+      <div className="relative z-10">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-white/80 text-sm font-medium mb-2">{title}</p>
+            <h3 className="text-4xl font-bold text-white mb-3">{value}</h3>
+            <div className="flex items-center gap-1.5">
+              {trendUp ? (
+                <ArrowUpRight size={18} className="text-white/90" />
+              ) : (
+                <ArrowDownRight size={18} className="text-white/90" />
+              )}
+              <span className="text-white/90 text-sm font-medium">{trend}</span>
+              <span className="text-white/70 text-xs ml-1">from last month</span>
+            </div>
+          </div>
+          <div className="rounded-xl bg-white/20 backdrop-blur-sm p-3">
+            {icon}
+          </div>
         </div>
       </div>
     </div>

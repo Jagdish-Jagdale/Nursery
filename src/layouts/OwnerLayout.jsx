@@ -26,11 +26,6 @@ const MENU = [
         end: true,
     },
     {
-        to: "/owner/nurseries",
-        label: "My Nurseries",
-        icon: Store,
-    },
-    {
         to: "/owner/addproduct",
         label: "Add Product",
         icon: PlusCircle,

@@ -198,9 +198,9 @@ export default function Dashboard() {
         />
         <StatCard
           title="Revenue (Subs)"
-          value="$45.2k"
+          value="₹45.2k"
           change={24.3}
-          icon={<DollarSign size={20} />}
+          icon={<span className="font-bold text-xl">₹</span>}
           color="text-green-600"
           iconBg="bg-green-50"
         />
