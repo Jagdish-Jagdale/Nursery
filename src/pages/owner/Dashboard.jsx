@@ -122,29 +122,41 @@ export default function OwnerDashboard() {
 
             {/* Main Content */}
             <div className="p-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+                {/* Header */}
+                <div className="mb-6">
+                    <h3 className="text-2xl mb-2 text-gray-900 font-extrabold">Dashboard</h3>
+                    <p className="text-base text-gray-600 mb-0 font-normal">
+                        Overview of your nursery's performance and key metrics.
+                    </p>
+                </div>
+
+                <hr className="mb-6 border-gray-200" />
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     <StatCard
-                        icon={<Users size={20} className="text-green-600" />}
+                        icon={<Users size={24} className="text-green-600" />}
                         value={stats.totalProducts.toLocaleString()}
                         label="Total Plants"
+                        bgColor="bg-green-50"
                     />
                     <StatCard
-                        icon={<Package size={20} className="text-blue-600" />}
+                        icon={<Package size={24} className="text-blue-600" />}
                         value={stats.admitted.toLocaleString()}
                         label="Plants Available"
+                        bgColor="bg-blue-50"
                     />
                     <StatCard
-                        icon={<span className="text-purple-600 font-bold text-xl">₹</span>}
-                        value={` ${(stats.revenue / 1000).toFixed(1)}`}
+                        icon={<span className="text-purple-600 font-bold text-2xl">₹</span>}
+                        value={`${(stats.revenue / 1000).toFixed(1)}`}
                         label="Total Revenue"
+                        bgColor="bg-purple-50"
                     />
                     <StatCard
-                        icon={<Clock size={20} className="text-orange-600" />}
-                        value={"4.2 "}
+                        icon={<Clock size={24} className="text-orange-600" />}
+                        value={"4.2"}
                         label="Avg Rating"
+                        bgColor="bg-orange-50"
                     />
 
                 </div>
@@ -203,46 +215,23 @@ export default function OwnerDashboard() {
                         </ResponsiveContainer>
                     </div>
 
-                    {/* Donut Chart - Takes 1 column */}
+                    {/* Feedback Chart - Takes 1 column */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 className="text-lg font-semibold text-gray-700 mb-4">Customer Satisfaction</h3>
-                        <div className="flex items-center justify-center mb-6">
-                            <DonutChart />
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                                    <span className="text-gray-600">Excellent</span>
-                                </div>
-                                <span className="font-medium">48%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                                    <span className="text-gray-600">Good</span>
-                                </div>
-                                <span className="font-medium">32%</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-                                    <span className="text-gray-600">Average/Below</span>
-                                </div>
-                                <span className="font-medium">20%</span>
-                            </div>
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-gray-100">
-                            <p className="text-sm text-gray-600 mb-3">Customer feedback on plant quality</p>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-6">Customer feedback on plant quality</h3>
+                        <div className="space-y-4">
                             {satisfactionData.map((item, idx) => (
                                 <div key={idx} className="mb-2">
-                                    <div className="flex items-center justify-between text-xs mb-1">
-                                        <span className="text-gray-600">{item.label}</span>
-                                        <span className="text-gray-900 font-medium">{item.value}%</span>
+                                    <div className="flex items-center justify-between text-sm mb-1.5">
+                                        <span className="text-gray-600 font-medium">{item.label}</span>
+                                        <span className="text-gray-900 font-bold">{item.value}%</span>
                                     </div>
-                                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-blue-500 rounded-full"
+                                            className={`h-full rounded-full ${item.label.includes("Poor") ? "bg-red-500" :
+                                                    item.label.includes("Average") ? "bg-yellow-400" :
+                                                        item.label.includes("No Review") ? "bg-gray-400" :
+                                                            "bg-blue-500"
+                                                }`}
                                             style={{ width: `${item.value}%` }}
                                         ></div>
                                     </div>
@@ -303,15 +292,16 @@ export default function OwnerDashboard() {
     );
 }
 
-function StatCard({ icon, value, label }) {
+// Redesigned StatCard component
+function StatCard({ icon, value, label, bgColor = "bg-blue-50" }) {
     return (
-        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-2">
-                <div className="mt-0.5">{icon}</div>
-                <div>
-                    <div className="text-xl font-bold text-gray-900 mb-0.5">{value}</div>
-                    <div className="text-sm text-gray-600">{label}</div>
-                </div>
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-full ${bgColor} flex items-center justify-center flex-shrink-0`}>
+                {icon}
+            </div>
+            <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{label}</p>
+                <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
             </div>
         </div>
     );

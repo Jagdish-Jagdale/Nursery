@@ -15,6 +15,7 @@ import Permissions from "./pages/admin/Permissions";
 import AdminSettings from "./pages/admin/Settings";
 import OwnerDashboard from "./pages/owner/Dashboard";
 import AddProduct from "./pages/owner/AddProduct";
+import OwnerOrders from "./pages/owner/Orders";
 import OwnerReports from "./pages/owner/Reports";
 import OwnerSettings from "./pages/owner/Settings";
 import UserOverview from "./pages/user/Overview";
@@ -59,6 +60,7 @@ function App() {
           <Route element={<OwnerLayout />}>
             <Route path="/owner/dashboard" element={<OwnerDashboard />} />
             <Route path="/owner/addproduct" element={<AddProduct />} />
+            <Route path="/owner/orders" element={<OwnerOrders />} />
             <Route path="/owner/reports" element={<OwnerReports />} />
             <Route path="/owner/settings" element={<OwnerSettings />} />
           </Route>

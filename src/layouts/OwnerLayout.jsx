@@ -14,7 +14,8 @@ import {
     Menu,
     X,
     Sprout,
-    Store
+    Store,
+    ShoppingCart
 } from "lucide-react";
 
 /* ---------- Menu Config ---------- */
@@ -30,6 +31,7 @@ const MENU = [
         label: "Add Product",
         icon: PlusCircle,
     },
+    { to: "/owner/orders", label: "Orders", icon: ShoppingCart },
     { to: "/owner/reports", label: "Reports", icon: FileText },
     { to: "/owner/settings", label: "Settings", icon: Settings },
 ];
