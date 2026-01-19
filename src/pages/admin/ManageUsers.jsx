@@ -7,10 +7,14 @@ import {
   getDocs,
   query,
   updateDoc,
+  deleteDoc,
   doc,
+  setDoc,
 } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { db, auth } from "../../lib/firebase";
+import { createUserWithEmailAndPassword, getAuth, signOut } from "firebase/auth";
+import { initializeApp, deleteApp } from "firebase/app";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, auth, storage } from "../../lib/firebase";
 import { ROLES } from "../../utils/roles";
 import toast from "react-hot-toast";
 import {
@@ -29,6 +33,13 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Lock,
+  Calendar,
+  Clock,
+
+  MapPin,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 // Keep dummy users if database is empty or fetch fails
@@ -39,9 +50,16 @@ export default function UsersManage() {
   const [nurseries, setNurseries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showViewPassword, setShowViewPassword] = useState(false); // For View Modal
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({
     userName: "",
     phone: "",
@@ -59,7 +77,7 @@ export default function UsersManage() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, roleFilter]);
+  }, [search, sortBy]);
 
   useEffect(() => {
     const load = async () => {
@@ -96,15 +114,7 @@ export default function UsersManage() {
     load();
   }, []);
 
-  const changeRole = async (id, role) => {
-    try {
-      await updateDoc(doc(db, "users", id), { role });
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
-      toast.success("Role updated");
-    } catch (e) {
-      toast.error("Failed to update role");
-    }
-  };
+
 
   const handleOpenModal = () => {
     setFormData({
@@ -116,11 +126,48 @@ export default function UsersManage() {
       nurseryName: "",
       password: "",
     });
+    setImageFile(null);
+    setImagePreview(null);
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setIsEditing(false);
+    setEditId(null);
+    setImagePreview(null);
+    setImageFile(null);
+  };
+
+  const handleEdit = (user, e) => {
+    e.stopPropagation();
+    setFormData({
+      userName: user.userName || "",
+      phone: user.phone || "",
+      email: user.email || "",
+      address: user.address || "",
+      nurseryId: "", // Not used in UI currently but kept for structure
+      nurseryName: "",
+      password: "", // Not populated
+    });
+    setImagePreview(user.profileImage || null);
+    setEditId(user.id);
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+    try {
+      await deleteDoc(doc(db, "users", id));
+      setUsers(prev => prev.filter(u => u.id !== id));
+      toast.success("User deleted successfully");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Failed to delete user");
+    }
   };
 
   const handleInputChange = (e) => {
@@ -147,16 +194,20 @@ export default function UsersManage() {
 
     if (
       !formData.userName ||
-      !formData.email ||
-      !formData.password ||
-      !formData.nurseryId
+      !formData.email
     ) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (!isEditing && !formData.password) {
+      toast.error("Password is required for new users");
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).{8,}$/;
+    if (formData.password && !passwordRegex.test(formData.password)) {
+      toast.error("Password must be at least 8 chars with 1 uppercase, 1 lowercase & 1 number/symbol");
       return;
     }
 
@@ -173,36 +224,88 @@ export default function UsersManage() {
     try {
       setSubmitting(true);
 
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email.trim(),
-        formData.password
-      );
+      let imageUrl = imagePreview; // Default to existing preview
 
-      await addDoc(collection(db, "users"), {
-        uid: userCredential.user.uid,
-        userName: formData.userName,
-        email: formData.email,
-        phone: formData.phone || "",
-        address: formData.address || "",
-        nurseryId: formData.nurseryId,
-        nurseryName: formData.nurseryName,
-        role: ROLES.USER,
-        createdAt: serverTimestamp(),
-        status: "active",
-      });
+      // Upload Image if selected
+      if (imageFile) {
+        const fileExtension = imageFile.name.split('.').pop();
+        const storageRef = ref(storage, `profiles/users/${formData.email}`);
+        await uploadBytes(storageRef, imageFile);
+        imageUrl = await getDownloadURL(storageRef);
+      }
 
-      toast.success("User added successfully!");
+      if (isEditing) {
+        // Update Logic
+        await updateDoc(doc(db, "users", editId), {
+          userName: formData.userName,
+          phone: formData.phone || "",
+          email: formData.email,
+          address: formData.address || "",
+          profileImage: imageUrl,
+          ...(formData.password ? { password: formData.password } : {}), // Update password if provided
+          updatedAt: serverTimestamp(),
+        });
+
+        toast.success("User updated successfully!");
+        // Update local state is tricky because 'users' might need refresh, but we can optimistically update
+        setUsers(prev => prev.map(u => u.id === editId ? {
+          ...u,
+          userName: formData.userName,
+          phone: formData.phone || "",
+          email: formData.email,
+          address: formData.address || "",
+          profileImage: imageUrl,
+          ...(formData.password ? { password: formData.password } : {}),
+          updatedAt: { seconds: Date.now() / 1000 }
+        } : u));
+
+      } else {
+        // Create Logic
+        // Initialize a secondary app to create user without logging out the current admin
+        const secondaryApp = initializeApp(auth.app.options, "Secondary");
+        const secondaryAuth = getAuth(secondaryApp);
+
+        const userCredential = await createUserWithEmailAndPassword(
+          secondaryAuth,
+          formData.email.trim(),
+          formData.password
+        );
+
+        const userId = userCredential.user.uid;
+
+        // Immediately sign out the secondary user to be safe
+        await signOut(secondaryAuth);
+
+        // Create user document
+        await setDoc(doc(db, "users", userId), {
+          uid: userId,
+          userName: formData.userName,
+          phone: formData.phone || "",
+          email: formData.email,
+          address: formData.address || "",
+          profileImage: imageUrl,
+          password: formData.password, // Store password
+          role: ROLES.USER,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          status: "active",
+        });
+
+        toast.success("User added successfully!");
+
+        // Reload users
+        const usersQuery = query(
+          collection(db, "users")
+        );
+        const usersSnap = await getDocs(usersQuery);
+        const realUsers = usersSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setUsers(realUsers);
+      }
+
       handleCloseModal();
 
-      // Reload users
-      // Reload users
-      const q = query(collection(db, "users"));
-      const snap = await getDocs(q);
-      const realUsers = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setUsers([...realUsers]);
     } catch (error) {
       console.error("Error:", error);
       if (error.code === "auth/email-already-in-use") {
@@ -220,9 +323,12 @@ export default function UsersManage() {
       !search ||
       (u.userName && u.userName.toLowerCase().includes(search.toLowerCase())) ||
       (u.email && u.email.toLowerCase().includes(search.toLowerCase()));
-    const matchesRole =
-      roleFilter === "all" || (u.role || ROLES.USER) === roleFilter;
-    return matchesSearch && matchesRole;
+    return matchesSearch;
+  }).sort((a, b) => {
+    if (sortBy === "newest") return new Date(b.createdAt) - new Date(a.createdAt);
+    if (sortBy === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
+    if (sortBy === "name") return (a.userName || "").localeCompare(b.userName || "");
+    return 0;
   });
 
   // Pagination Logic
@@ -253,9 +359,9 @@ export default function UsersManage() {
         <hr className="mt-4 mb-5 border-gray-100" />
 
         {/* Search & Filters */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-3">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h5 className="font-semibold text-gray-900 text-base">Search & Filters</h5>
+            <h5 className="text-xs font-semibold text-gray-900">Search & Filters</h5>
             <button
               className="flex items-center gap-2 shadow-sm text-sm bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition"
               style={{ borderRadius: "12px" }}
@@ -265,7 +371,7 @@ export default function UsersManage() {
               <span>Add User</span>
             </button>
           </div>
-          <hr className="mt-0 mb-4 border-gray-200 opacity-10" />
+          <hr className="mt-0 mb-4 border-gray-200" />
           <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
             <div className="md:col-span-5 relative">
               <Search
@@ -284,14 +390,13 @@ export default function UsersManage() {
             <div className="md:col-span-3 relative">
               <Filter className="absolute text-gray-400 left-3 top-1/2 -translate-y-1/2" size={16} />
               <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer bg-white"
               >
-                <option value="all">All Roles</option>
-                <option value={ROLES.ADMIN}>Admin</option>
-                <option value={ROLES.OWNER}>Nursery Owner</option>
-                <option value={ROLES.USER}>User</option>
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="name">Name (A-Z)</option>
               </select>
             </div>
 
@@ -339,32 +444,36 @@ export default function UsersManage() {
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-50/50 border-b border-gray-100">
-                <tr>
-                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider w-[60px]">
-                    SR NO
+            <table className="w-full border-separate border-spacing-0">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-100">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Sr No
                   </th>
-                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider">
-                    NURSERY / USER
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Image
                   </th>
-                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider">
-                    CONTACT
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Name
                   </th>
-                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider">
-                    ROLE
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Email
                   </th>
-                  <th className="py-3 px-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">
-                    ACTIONS
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Joined Date
+                  </th>
+
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Action
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="bg-white">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8">
+                    <td colSpan={5} className="text-center py-12">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                         <span className="text-sm text-gray-500 font-medium">
@@ -377,126 +486,74 @@ export default function UsersManage() {
                   paginatedUsers.map((u, index) => (
                     <tr
                       key={u.id}
-                      className="group hover:bg-gray-50/50 transition-colors"
+                      onClick={() => setSelectedUser(u)}
+                      style={{ borderBottom: '1px solid #dae2eeff' }}
+                      className="bg-white transition-colors cursor-pointer hover:!bg-blue-50"
                     >
-                      <td className="px-4 py-3 text-base text-gray-500 font-medium">
-                        {String(startIndex + index + 1).padStart(2, "0")}
+                      <td className="px-6 py-2.5 whitespace-nowrap text-center">
+                        <span className="text-sm text-gray-900">
+                          {String(startIndex + index + 1).padStart(2, "0")}
+                        </span>
                       </td>
 
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 min-w-[40px] rounded-full flex items-center justify-center shadow-sm ${(u.role || ROLES.USER) === ROLES.OWNER
-                              ? "bg-green-50 text-green-600"
-                              : "bg-gray-100 text-gray-500"
-                              }`}
-                          >
-                            {(u.role || ROLES.USER) === ROLES.OWNER ? (
-                              <Trees size={20} />
-                            ) : u.userName ? (
-                              <span className="font-semibold">{u.userName.charAt(0).toUpperCase()}</span>
-                            ) : (
-                              <User size={18} />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-base font-semibold text-gray-900 truncate max-w-[200px]">
-                                {u.userName || "Unknown User"}
-                              </span>
-                              {(u.role || ROLES.USER) === ROLES.ADMIN && (
-                                <span className="px-1.5 py-0.5 text-[10px] font-bold text-purple-600 bg-purple-50 border border-purple-100 rounded">
-                                  ADMIN
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-500 flex items-center gap-1">
-                              <span>
-                                Created:{" "}
-                                {u.createdAt
-                                  ? new Date(u.createdAt).toLocaleDateString(
-                                    "en-US",
-                                    {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    }
-                                  )
-                                  : "N/A"}
-                              </span>
-                            </div>
-                          </div>
+                      <td className="px-6 py-2.5 whitespace-nowrap">
+                        <div className="flex items-center justify-center">
+                          <img
+                            src={u.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.userName || "User")}&background=random`}
+                            alt={u.userName}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.userName || "User")}&background=random`;
+                            }}
+                          />
                         </div>
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-2.5 whitespace-nowrap">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900">
+                            {u.userName || "Unknown User"}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-2.5 whitespace-nowrap">
                         <div className="flex flex-col gap-1">
-                          {u.email && (
-                            <div className="flex items-center gap-2 text-base text-gray-700">
-                              <Mail size={14} className="text-gray-400 shrink-0" />
-                              <span className="truncate max-w-[200px]">{u.email}</span>
-                            </div>
-                          )}
+                          <span className="text-sm text-gray-900">
+                            {u.email}
+                          </span>
                           {u.phone && (
-                            <div className="flex items-center gap-2 text-base text-gray-700">
-                              <Phone size={14} className="text-gray-400 shrink-0" />
-                              <span>{u.phone}</span>
-                            </div>
+                            <span className="text-xs text-gray-500 font-mono">
+                              {u.phone}
+                            </span>
                           )}
                         </div>
                       </td>
 
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-2 items-start">
-                          <div
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-semibold ${(u.role || ROLES.USER) === ROLES.OWNER
-                              ? "bg-green-50 text-green-700 border border-green-100"
-                              : (u.role || ROLES.USER) === ROLES.ADMIN
-                                ? "bg-purple-50 text-purple-700 border border-purple-100"
-                                : "bg-blue-50 text-blue-700 border border-blue-100"
-                              }`}
-                          >
-                            <Shield size={12} />
-                            <span>
-                              {u.role === ROLES.OWNER
-                                ? "Owner"
-                                : u.role || "User"}
-                            </span>
-                          </div>
-
-                          <select
-                            value={u.role || ROLES.USER}
-                            onChange={(e) => changeRole(u.id, e.target.value)}
-                            className="bg-transparent text-sm text-gray-500 border-none p-0 pr-6 cursor-pointer focus:ring-0 hover:text-gray-700"
-                          >
-                            <option value={ROLES.USER}>Switch to User</option>
-                            <option value={ROLES.OWNER}>Switch to Nursery Owner</option>
-                            <option value={ROLES.ADMIN}>
-                              Switch to Admin
-                            </option>
-                          </select>
-                        </div>
+                      <td className="px-6 py-2.5 whitespace-nowrap">
+                        <span className="text-sm text-gray-500">
+                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"}
+                        </span>
                       </td>
 
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-1 opacity-100 group-hover:opacity-100 transition-opacity">
+
+
+                      <td className="px-6 py-2.5 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button
-                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            onClick={(e) => handleEdit(u, e)}
+                            className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
                             title="Edit User"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            onClick={(e) => handleDelete(u.id, e)}
+                            className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors"
                             title="Delete User"
                           >
                             <Trash2 size={16} />
-                          </button>
-                          <button
-                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="More Options"
-                          >
-                            <MoreVertical size={16} />
                           </button>
                         </div>
                       </td>
@@ -504,7 +561,7 @@ export default function UsersManage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center">
+                    <td colSpan={5} className="py-12 text-center">
                       <div className="flex flex-col items-center justify-center text-gray-400">
                         <div className="bg-gray-50 p-4 rounded-full mb-3">
                           <User size={32} className="opacity-50" />
@@ -522,6 +579,108 @@ export default function UsersManage() {
         </div>
       </div>
 
+      {/* View User Modal */}
+      {
+        selectedUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+              onClick={() => setSelectedUser(null)}
+            ></div>
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden transform transition-all">
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <User className="text-blue-600" size={24} />
+                  User Details
+                </h3>
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto max-h-[80vh]">
+                <div className="flex flex-col items-center mb-6">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-blue-100 bg-gray-50 flex items-center justify-center mb-3">
+                    {selectedUser.profileImage ? (
+                      <img
+                        src={selectedUser.profileImage}
+                        alt={selectedUser.userName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User size={32} className="text-gray-400" />
+                    )}
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900">{selectedUser.userName}</h4>
+                  <span className="text-sm text-gray-500">{selectedUser.email}</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Phone Number
+                    </label>
+                    <p className="text-base font-medium text-gray-900 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      {selectedUser.phone || "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Address
+                    </label>
+                    <p className="text-base font-medium text-gray-900 p-3 bg-gray-50 rounded-lg border border-gray-100 min-h-[50px]">
+                      {selectedUser.address || "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Role
+                    </label>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium 
+                      ${selectedUser.role === ROLES.OWNER ? "bg-green-100 text-green-800" :
+                          selectedUser.role === ROLES.ADMIN ? "bg-purple-100 text-purple-800" :
+                            "bg-blue-100 text-blue-800"}`}
+                      >
+                        {selectedUser.role === ROLES.OWNER ? "Owner" : selectedUser.role || "User"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Joined Date
+                    </label>
+                    <p className="text-base font-medium text-gray-900 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      {selectedUser.createdAt?.seconds || selectedUser.createdAt
+                        ? new Date(selectedUser.createdAt.seconds ? selectedUser.createdAt.seconds * 1000 : selectedUser.createdAt).toLocaleDateString()
+                        : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-all shadow-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
       {/* Tailwind Modal */}
       {
         showModal && (
@@ -535,7 +694,7 @@ export default function UsersManage() {
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
                 <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                   <User className="text-green-600" size={24} />
-                  Add New User
+                  {isEditing ? "Edit User" : "Add New User"}
                 </h3>
                 <button
                   onClick={handleCloseModal}
@@ -548,12 +707,57 @@ export default function UsersManage() {
               {/* Modal Body */}
               <div className="p-6 overflow-y-auto max-h-[80vh]">
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Image Upload */}
+                  <div className="flex flex-col items-center mb-4">
+                    <div className="relative group cursor-pointer">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-green-100 bg-gray-50 flex items-center justify-center">
+                        {imagePreview ? (
+                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <User size={32} className="text-gray-400" />
+                        )}
+                      </div>
+                      <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              setImageFile(file);
+                              setImagePreview(URL.createObjectURL(file));
+                            }
+                          }}
+                        />
+                        <span className="text-white text-xs font-medium">Change</span>
+                      </label>
+                    </div>
+                    {imagePreview ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreview(null);
+                        }}
+                        className="text-xs text-red-500 mt-2 hover:text-red-700 font-medium"
+                      >
+                        Remove Profile
+                      </button>
+                    ) : (
+                      <p className="text-xs text-gray-500 mt-2">Upload Profile Picture</p>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Name */}
                     <div className="space-y-1.5">
-                      <label className="text-base font-medium text-gray-700 block">
-                        Name <span className="text-red-500">*</span>
-                      </label>
+                      <div className="flex items-center gap-2">
+                        <User size={16} className="text-blue-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Name <span className="text-red-500">*</span>
+                        </label>
+                      </div>
                       <input
                         type="text"
                         name="userName"
@@ -568,25 +772,50 @@ export default function UsersManage() {
 
                     {/* Phone */}
                     <div className="space-y-1.5">
-                      <label className="text-base font-medium text-gray-700 block">
-                        Phone Number
-                      </label>
+                      <div className="flex items-center gap-2">
+                        <Phone size={16} className="text-orange-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Phone Number
+                        </label>
+                      </div>
                       <input
                         type="tel"
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        placeholder="+91 98765 43210"
+                        placeholder="Enter phone number"
                         className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                        disabled={submitting}
+                      />
+                    </div>
+
+                    {/* Address */}
+                    <div className="space-y-1.5 md:col-span-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} className="text-red-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Address
+                        </label>
+                      </div>
+                      <textarea
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Enter address"
+                        rows={3}
+                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 resize-none"
                         disabled={submitting}
                       />
                     </div>
 
                     {/* Email */}
                     <div className="space-y-1.5">
-                      <label className="text-base font-medium text-gray-700 block">
-                        Email <span className="text-red-500">*</span>
-                      </label>
+                      <div className="flex items-center gap-2">
+                        <Mail size={16} className="text-purple-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Email <span className="text-red-500">*</span>
+                        </label>
+                      </div>
                       <input
                         type="email"
                         name="email"
@@ -599,74 +828,38 @@ export default function UsersManage() {
                       />
                     </div>
 
-                    {/* Address */}
-                    <div className="space-y-1.5">
-                      <label className="text-base font-medium text-gray-700 block">
-                        Address
-                      </label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        placeholder="Enter address"
-                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
-                        disabled={submitting}
-                      />
-                    </div>
-
-                    {/* Nursery Name Dropdown */}
-                    <div className="space-y-1.5">
-                      <label className="text-base font-medium text-gray-700 block">
-                        Nursery Name <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="nurseryId"
-                        value={formData.nurseryId}
-                        onChange={(e) => {
-                          const selectedNursery = nurseries.find(
-                            (n) => n.id === e.target.value
-                          );
-                          setFormData((prev) => ({
-                            ...prev,
-                            nurseryId: e.target.value,
-                            nurseryName: selectedNursery
-                              ? selectedNursery.nurseryName || selectedNursery.name
-                              : "",
-                          }));
-                        }}
-                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white"
-                        disabled={submitting}
-                        required
-                      >
-                        <option value="">Select a Nursery</option>
-                        {nurseries.map((nursery) => (
-                          <option key={nursery.id} value={nursery.id}>
-                            {nursery.nurseryName || nursery.name || "Unknown Nursery"}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
                     {/* Password */}
                     <div className="space-y-1.5">
-                      <label className="text-base font-medium text-gray-700 block">
-                        Password <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        placeholder="Enter password (min 6 characters)"
-                        className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
-                        disabled={submitting}
-                        required
-                        minLength={6}
-                      />
-                      <p className="text-xs text-gray-500">
-                        Password must be at least 6 characters
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <Lock size={16} className="text-gray-400" />
+                        <label className="text-base font-medium text-gray-700">
+                          Password
+                        </label>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          placeholder={isEditing ? "Leave blank to keep current password" : "Enter password"}
+                          className="w-full pl-3 pr-10 py-2.5 text-base border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                          disabled={submitting}
+                          required={!isEditing}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                      {isEditing && (
+                        <p className="text-xs text-gray-500">
+                          Only enter if you defined to change the password
+                        </p>
+                      )}
                     </div>
                   </div>
                 </form>
@@ -696,12 +889,179 @@ export default function UsersManage() {
                     </>
                   ) : (
                     <>
-                      <Plus size={18} />
+
                       <span>Add User</span>
                     </>
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* View User Modal */}
+      {
+        selectedUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+              onClick={() => {
+                setSelectedUser(null);
+                setShowViewPassword(false);
+              }}
+            ></div>
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden transform transition-all">
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
+                <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <User className="text-blue-600" size={24} />
+                  User Details
+                </h3>
+                <button
+                  onClick={() => {
+                    setSelectedUser(null);
+                    setShowViewPassword(false);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 transition-colors"
+                  style={{ borderRadius: "12px" }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto max-h-[80vh]">
+                <div className="space-y-6">
+                  {/* Image Display */}
+                  <div className="flex flex-col items-center mb-4">
+                    <div className="relative group">
+                      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-green-100 bg-gray-50 flex items-center justify-center">
+                        {selectedUser.profileImage ? (
+                          <img
+                            src={selectedUser.profileImage}
+                            alt={selectedUser.userName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User size={32} className="text-gray-400" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Name */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <User size={16} className="text-blue-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Name
+                        </label>
+                      </div>
+                      <div className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                        {selectedUser.userName || "N/A"}
+                      </div>
+                    </div>
+
+                    {/* Phone */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <Phone size={16} className="text-orange-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Phone Number
+                        </label>
+                      </div>
+                      <div className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                        {selectedUser.phone || "N/A"}
+                      </div>
+                    </div>
+
+                    {/* Address */}
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-base font-medium text-gray-700 flex items-center gap-2">
+                        <MapPin size={16} className="text-red-600" />
+                        Address
+                      </label>
+                      <div className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg bg-gray-50 text-gray-900 min-h-[3rem] whitespace-pre-wrap">
+                        {selectedUser.address || "N/A"}
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <Mail size={16} className="text-purple-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Email
+                        </label>
+                      </div>
+                      <div className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                        {selectedUser.email || "N/A"}
+                      </div>
+                    </div>
+
+                    {/* Password (View Mode) */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <Lock size={16} className="text-gray-400" />
+                        <label className="text-base font-medium text-gray-700">
+                          Password
+                        </label>
+                      </div>
+                      <div className="relative">
+                        <div className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                          {showViewPassword ? (selectedUser.password || "N/A") : "••••••••"}
+                        </div>
+                        <button
+                          onClick={() => setShowViewPassword(!showViewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                          {showViewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Created */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={16} className="text-teal-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Created
+                        </label>
+                      </div>
+                      <div className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                        {selectedUser.createdAt?.seconds
+                          ? new Date(selectedUser.createdAt.seconds * 1000).toLocaleString('en-GB', { hour12: true })
+                          : selectedUser.createdAt
+                            ? new Date(selectedUser.createdAt).toLocaleString('en-GB', { hour12: true })
+                            : "N/A"}
+                      </div>
+                    </div>
+
+                    {/* Updated */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-teal-600" />
+                        <label className="text-base font-medium text-gray-700">
+                          Updated
+                        </label>
+                      </div>
+                      <div className="w-full px-3 py-2.5 text-base border border-gray-200 rounded-lg bg-gray-50 text-gray-900">
+                        {selectedUser.updatedAt?.seconds
+                          ? new Date(selectedUser.updatedAt.seconds * 1000).toLocaleString('en-GB', { hour12: true })
+                          : selectedUser.createdAt?.seconds
+                            ? new Date(selectedUser.createdAt.seconds * 1000).toLocaleString('en-GB', { hour12: true })
+                            : selectedUser.createdAt
+                              ? new Date(selectedUser.createdAt).toLocaleString('en-GB', { hour12: true })
+                              : "N/A"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
             </div>
           </div>
         )
