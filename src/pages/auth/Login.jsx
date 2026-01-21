@@ -12,6 +12,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [showErrorBorder, setShowErrorBorder] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,6 +25,24 @@ export default function Login() {
       navigate(from, { replace: true });
     }
   }, [user, loading, navigate, from]);
+
+  // Handle error auto-dismissal with animation
+  useEffect(() => {
+    if (error) {
+      setIsExiting(false);
+      const exitTimer = setTimeout(() => setIsExiting(true), 2700);
+      const removeTimer = setTimeout(() => {
+        setError("");
+        setIsExiting(false);
+        setShowErrorBorder(false);
+      }, 3000);
+
+      return () => {
+        clearTimeout(exitTimer);
+        clearTimeout(removeTimer);
+      };
+    }
+  }, [error]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -47,14 +66,17 @@ export default function Login() {
       toast.success("Login successful!");
       navigate(from, { replace: true });
     } catch (e) {
-      setError("Invalid email address or password. Please try again.");
+      console.error(e);
+      // Only show the error message if it's our custom inactive error
+      const message = e.message.includes("Account Inactive")
+        ? e.message
+        : "Incorrect email or password. Please verify your credentials and try again.";
+
+      setError(message);
       setShowErrorBorder(true);
-      setTimeout(() => {
-        setError("");
-        setShowErrorBorder(false);
-      }, 2000);
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -109,12 +131,11 @@ export default function Login() {
 
             <div
               className="mx-auto w-full max-w-sm"
-              style={{ marginTop: "-80px" }}
             >
               {/* Error Message Container with Fixed Height */}
-              <div className="h-14 mb-2" style={{ marginTop: "30px" }}>
+              <div className="h-12 mb-3" style={{ marginTop: "-12px" }}>
                 {error && (
-                  <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 text-center animate-slideDown">
+                  <div className={`rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700 text-center ${isExiting ? 'animate-slideUpOut' : 'animate-slideDown'}`}>
                     {error}
                   </div>
                 )}
@@ -159,8 +180,8 @@ export default function Login() {
                         fontWeight: "600",
                       }}
                       className={`h-12 w-full rounded-lg border pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 ${showErrorBorder
-                          ? "border-red-500 animate-blinkBorder"
-                          : "border-slate-300 bg-white"
+                        ? "border-red-500 animate-blinkBorder"
+                        : "border-slate-300 bg-white"
                         }`}
                       placeholder="Enter your email address"
                     />
@@ -188,8 +209,8 @@ export default function Login() {
                         fontWeight: "600",
                       }}
                       className={`h-12 w-full rounded-lg border text-sm outline-none transition placeholder:text-slate-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 ${showErrorBorder
-                          ? "border-red-500 animate-blinkBorder"
-                          : "border-slate-300 bg-white"
+                        ? "border-red-500 animate-blinkBorder"
+                        : "border-slate-300 bg-white"
                         }`}
                       placeholder="Enter your password"
                     />
@@ -214,10 +235,10 @@ export default function Login() {
 
                 <button
                   disabled={loading}
-                  style={{ marginTop: "12px" }}
-                  className="h-12 w-full rounded-lg bg-green-600 px-4 font-semibold text-base text-white shadow-md shadow-green-600/30 transition hover:bg-green-700 hover:shadow-lg hover:shadow-green-600/40 disabled:opacity-60"
+                  style={{ marginTop: "12px", borderRadius: "12px" }}
+                  className="h-12 w-full bg-green-600 px-4 font-semibold text-base text-white shadow-md shadow-green-600/30 transition hover:bg-green-700 hover:shadow-lg hover:shadow-green-600/40 disabled:opacity-60"
                 >
-                  {loading ? "Signing in..." : "Login"}
+                  {loading ? "Logging in..." : "Login"}
                 </button>
 
                 <p
@@ -227,7 +248,8 @@ export default function Login() {
                   Don't have an account?{" "}
                   <Link
                     to="/register"
-                    className="font-semibold text-green-600 hover:text-green-700 "
+                    style={{ textDecoration: "none", color: "#16a34a" }}
+                    className="font-semibold text-green-600 !no-underline hover:!text-green-700"
                   >
                     Register
                   </Link>

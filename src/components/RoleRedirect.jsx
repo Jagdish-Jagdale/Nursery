@@ -24,7 +24,8 @@ export default function RoleRedirect() {
       hasRedirected.current = true
       if (role === ROLES.ADMIN) navigate('/admin/dashboard', { replace: true })
       else if (role === ROLES.OWNER) navigate('/owner/dashboard', { replace: true })
-      else navigate('/user', { replace: true })
+      else if (role === ROLES.USER) navigate('/user', { replace: true })
+      else navigate('/user', { replace: true }) // Fallback
     }
   }, [user, role, loading])
 

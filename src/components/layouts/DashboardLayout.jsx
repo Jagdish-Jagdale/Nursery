@@ -1,25 +1,21 @@
 import { Outlet } from 'react-router-dom'
-import Navbar from '../Navbar'
-import Sidebar from '../Sidebar'
+import UserNavbar from '../UserNavbar'
+import BottomNav from '../BottomNav'
 
 export default function DashboardLayout() {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-emerald-50/30 to-gray-100">
-      {/* Sidebar */}
-      <Sidebar />
+    <div className="flex flex-col min-h-screen bg-gray-50 overflow-y-auto no-scrollbar">
+
+      {/* Top Navbar - Visible on all screens, adapts content */}
+      <UserNavbar />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Top Navbar */}
-        <Navbar />
+      <main className="flex-1 w-full">
+        <Outlet />
+      </main>
 
-        {/* Page Content */}
-        <main className="flex-1 p-6 lg:p-8 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+      {/* Bottom Navigation - Visible only on mobile */}
+      <BottomNav />
     </div>
   )
 }

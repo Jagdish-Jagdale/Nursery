@@ -209,19 +209,19 @@ export default function OwnerLayout() {
                         }`}
                 >
                     {!collapsed && (
-                        <div className="flex items-center gap-4 w-full px-4">
-                            <div className="flex-shrink-0">
+                        <div className="flex flex-col items-center gap-3 w-full px-4 py-4">
+                            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100 p-1 overflow-hidden transition-transform hover:scale-105">
                                 <img
                                     src="/titleLogo.png"
-                                    className="w-14 h-14 object-contain"
+                                    className="w-full h-full object-contain"
                                     alt="Logo"
                                 />
                             </div>
-                            <div className="flex flex-col items-start">
-                                <span className="font-bold text-gray-900 text-lg leading-tight">
+                            <div className="flex flex-col items-center">
+                                <span className="font-bold text-gray-900 text-lg leading-tight tracking-tight">
                                     Nursery Management
                                 </span>
-                                <span className="mt-1 px-2.5 py-0.5 text-xs font-bold bg-green-600 text-white rounded uppercase tracking-wide">
+                                <span className="mt-1 px-3 py-0.5 text-[10px] font-bold bg-green-600 text-white rounded-full uppercase tracking-wider shadow-sm">
                                     Owner
                                 </span>
                             </div>

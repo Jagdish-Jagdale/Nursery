@@ -18,9 +18,11 @@ import AddProduct from "./pages/owner/AddProduct";
 import OwnerOrders from "./pages/owner/Orders";
 import OwnerReports from "./pages/owner/Reports";
 import OwnerSettings from "./pages/owner/Settings";
-import UserOverview from "./pages/user/Overview";
+import UserDashboard from "./pages/user/UserDashboard";
 import Search from "./pages/user/Search";
 import Orders from "./pages/user/Orders";
+import ProductDetails from "./pages/user/ProductDetails";
+import Cart from "./pages/user/Cart";
 import { ROLES } from "./utils/roles";
 
 function App() {
@@ -69,9 +71,11 @@ function App() {
         {/* USER */}
         <Route element={<Protected roles={[ROLES.USER]} />}>
           <Route element={<DashboardLayout />}>
-            <Route path="/user" element={<UserOverview />} />
+            <Route path="/user" element={<UserDashboard />} />
             <Route path="/user/search" element={<Search />} />
+            <Route path="/user/cart" element={<Cart />} />
             <Route path="/user/orders" element={<Orders />} />
+            <Route path="/user/product/:id" element={<ProductDetails />} />
           </Route>
         </Route>
 

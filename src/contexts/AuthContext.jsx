@@ -32,6 +32,13 @@ export function AuthProvider({ children }) {
 
         if (userSnap.exists()) {
           const data = userSnap.data();
+          if (data.status === "inactive") {
+            await signOut(auth);
+            setUser(null);
+            setRole(null);
+            setLoading(false);
+            return;
+          }
           setRole(data.role || ROLES.ADMIN);
         } else {
           // If not in users collection, check owners collection
@@ -39,6 +46,14 @@ export function AuthProvider({ children }) {
           const ownersSnap = await getDocs(ownersQuery);
 
           if (!ownersSnap.empty) {
+            const ownerData = ownersSnap.docs[0].data();
+            if (ownerData.status === "inactive") {
+              await signOut(auth);
+              setUser(null);
+              setRole(null);
+              setLoading(false);
+              return;
+            }
             // User is an owner - set role directly without creating user doc
             // (Creating user doc here would trigger infinite loop)
             setRole(ROLES.OWNER);
@@ -57,8 +72,35 @@ export function AuthProvider({ children }) {
     return () => unsub();
   }, []);
 
-  const login = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
+  const login = async (email, password) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Check users collection
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      if (userSnap.data().status === "inactive") {
+        await signOut(auth);
+        throw new Error("Account Inactive: Access is currently restricted. Please contact support.");
+      }
+      return userCredential;
+    }
+
+    // Check owners collection
+    const ownersQuery = query(collection(db, "owners"), where("uid", "==", user.uid));
+    const ownersSnap = await getDocs(ownersQuery);
+
+    if (!ownersSnap.empty) {
+      if (ownersSnap.docs[0].data().status === "inactive") {
+        await signOut(auth);
+        throw new Error("Account Inactive: Access is currently restricted. Please contact support.");
+      }
+    }
+
+    return userCredential;
+  };
   const register = async (email, password, profile = {}) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const ref = doc(db, "users", cred.user.uid);
@@ -67,6 +109,7 @@ export function AuthProvider({ children }) {
       {
         uid: cred.user.uid,
         email,
+        password,
         role: ROLES.USER,
         createdAt: serverTimestamp(),
         ...profile,

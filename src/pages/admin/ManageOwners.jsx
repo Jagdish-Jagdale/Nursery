@@ -37,6 +37,7 @@ import {
     Eye,
     EyeOff,
 } from "lucide-react";
+import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
 
 export default function ManageOwners() {
     const [users, setUsers] = useState([]);
@@ -61,6 +62,10 @@ export default function ManageOwners() {
         password: "",
         status: "active",
     });
+
+    // Delete Modal State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [ownerToDelete, setOwnerToDelete] = useState(null);
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -136,14 +141,21 @@ export default function ManageOwners() {
         setShowPassword(false); // Reset password visibility
     };
 
-    const handleDelete = async (id, e) => {
+    const handleDelete = (owner, e) => {
         e.stopPropagation();
-        if (!window.confirm("Are you sure you want to delete this owner?")) return;
+        setOwnerToDelete(owner);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!ownerToDelete) return;
 
         try {
-            await deleteDoc(doc(db, "owners", id));
-            setUsers(prev => prev.filter(u => u.id !== id));
+            await deleteDoc(doc(db, "owners", ownerToDelete.id));
+            setUsers(prev => prev.filter(u => u.id !== ownerToDelete.id));
             toast.success("Owner deleted successfully");
+            setShowDeleteModal(false);
+            setOwnerToDelete(null);
         } catch (error) {
             console.error("Error deleting owner:", error);
             toast.error("Failed to delete owner");
@@ -543,7 +555,7 @@ export default function ManageOwners() {
                                                         <Edit2 size={16} />
                                                     </button>
                                                     <button
-                                                        onClick={(e) => handleDelete(u.id, e)}
+                                                        onClick={(e) => handleDelete(u, e)}
                                                         className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors"
                                                         title="Delete Owner"
                                                     >
@@ -572,6 +584,17 @@ export default function ManageOwners() {
                     </div >
                 </div >
             </div >
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                title="Delete Owner?"
+                message="This action cannot be undone. This will permanently delete the owner and remove their access to the system."
+                confirmText="DELETE OWNER"
+                itemName={ownerToDelete?.ownerName}
+            />
 
             {/* Tailwind Modal */}
             {

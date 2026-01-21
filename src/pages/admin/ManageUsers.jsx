@@ -41,6 +41,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
 
 // Keep dummy users if database is empty or fetch fails
 
@@ -68,7 +69,12 @@ export default function UsersManage() {
     nurseryId: "",
     nurseryName: "",
     password: "",
+    status: "active",
   });
+
+  // Delete Modal State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -91,7 +97,11 @@ export default function UsersManage() {
         const usersSnap = await getDocs(usersQuery);
         const realUsers = usersSnap.docs
           .map((d) => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          .sort((a, b) => {
+            const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
+            const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
+            return dateB - dateA;
+          });
         setUsers(realUsers);
 
         // Fetch Nurseries (Owners)
@@ -125,6 +135,7 @@ export default function UsersManage() {
       nurseryId: "",
       nurseryName: "",
       password: "",
+      status: "active",
     });
     setImageFile(null);
     setImagePreview(null);
@@ -149,6 +160,7 @@ export default function UsersManage() {
       nurseryId: "", // Not used in UI currently but kept for structure
       nurseryName: "",
       password: "", // Not populated
+      status: user.status || "active",
     });
     setImagePreview(user.profileImage || null);
     setEditId(user.id);
@@ -156,14 +168,23 @@ export default function UsersManage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id, e) => {
+  const handleDelete = (user, e) => {
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    setUserToDelete(user);
+    // setDeleteConfirmationText(""); // No longer needed here, handled inside modal
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    // Validation is now handled inside the modal component
+    if (!userToDelete) return;
 
     try {
-      await deleteDoc(doc(db, "users", id));
-      setUsers(prev => prev.filter(u => u.id !== id));
+      await deleteDoc(doc(db, "users", userToDelete.id));
+      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
       toast.success("User deleted successfully");
+      setShowDeleteModal(false);
+      setUserToDelete(null);
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to delete user");
@@ -244,6 +265,7 @@ export default function UsersManage() {
           profileImage: imageUrl,
           ...(formData.password ? { password: formData.password } : {}), // Update password if provided
           updatedAt: serverTimestamp(),
+          status: formData.status,
         });
 
         toast.success("User updated successfully!");
@@ -256,7 +278,8 @@ export default function UsersManage() {
           address: formData.address || "",
           profileImage: imageUrl,
           ...(formData.password ? { password: formData.password } : {}),
-          updatedAt: { seconds: Date.now() / 1000 }
+          updatedAt: { seconds: Date.now() / 1000 },
+          status: formData.status,
         } : u));
 
       } else {
@@ -288,7 +311,7 @@ export default function UsersManage() {
           role: ROLES.USER,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-          status: "active",
+          status: formData.status || "active",
         });
 
         toast.success("User added successfully!");
@@ -325,8 +348,11 @@ export default function UsersManage() {
       (u.email && u.email.toLowerCase().includes(search.toLowerCase()));
     return matchesSearch;
   }).sort((a, b) => {
-    if (sortBy === "newest") return new Date(b.createdAt) - new Date(a.createdAt);
-    if (sortBy === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
+    const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
+    const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
+
+    if (sortBy === "newest") return dateB - dateA;
+    if (sortBy === "oldest") return dateA - dateB;
     if (sortBy === "name") return (a.userName || "").localeCompare(b.userName || "");
     return 0;
   });
@@ -465,6 +491,10 @@ export default function UsersManage() {
                     Joined Date
                   </th>
 
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Status
+                  </th>
+
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Action
                   </th>
@@ -533,7 +563,17 @@ export default function UsersManage() {
 
                       <td className="px-6 py-2.5 whitespace-nowrap">
                         <span className="text-sm text-gray-500">
-                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"}
+                          {u.createdAt?.seconds
+                            ? new Date(u.createdAt.seconds * 1000).toLocaleDateString('en-GB')
+                            : u.createdAt
+                              ? new Date(u.createdAt).toLocaleDateString('en-GB')
+                              : "N/A"}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-2.5 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(u.status || "active") === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                          {(u.status || "active") === "active" ? "Active" : "Inactive"}
                         </span>
                       </td>
 
@@ -549,7 +589,7 @@ export default function UsersManage() {
                             <Edit2 size={16} />
                           </button>
                           <button
-                            onClick={(e) => handleDelete(u.id, e)}
+                            onClick={(e) => handleDelete(u, e)}
                             className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors"
                             title="Delete User"
                           >
@@ -681,6 +721,17 @@ export default function UsersManage() {
         )
       }
 
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        title="Delete User?"
+        message="This action cannot be undone. This will permanently delete the user and remove their access to the system."
+        confirmText="DELETE USER"
+        itemName={userToDelete?.userName}
+      />
+
       {/* Tailwind Modal */}
       {
         showModal && (
@@ -705,7 +756,22 @@ export default function UsersManage() {
               </div>
 
               {/* Modal Body */}
-              <div className="p-6 overflow-y-auto max-h-[80vh]">
+              <div className="p-6 overflow-y-auto max-h-[80vh] relative">
+                {/* Status Toggle Top Right */}
+                <div className="absolute top-6 right-6 z-10 flex flex-col items-center gap-1">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.status === "active"}
+                      onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.checked ? "active" : "inactive" }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                  <span className={`text-xs font-semibold ${formData.status === "active" ? "text-green-600" : "text-gray-400"}`}>
+                    {formData.status === "active" ? "Active" : "Inactive"}
+                  </span>
+                </div>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Image Upload */}
                   <div className="flex flex-col items-center mb-4">
@@ -717,6 +783,9 @@ export default function UsersManage() {
                           <User size={32} className="text-gray-400" />
                         )}
                       </div>
+
+                      {/* Status Dot (Bottom Right) */}
+                      <div className={`absolute bottom-0 right-1 w-5 h-5 rounded-full border-2 border-white ${formData.status === "active" ? "bg-green-500" : "bg-gray-400"}`}></div>
                       <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                         <input
                           type="file"
