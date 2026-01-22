@@ -1,77 +1,224 @@
-import { useEffect, useState } from 'react'
-import { collection, getDocs, query, where } from 'firebase/firestore'
-import { db } from '../../lib/firebase'
-import { useAuth } from '../../contexts/AuthContext'
-import Table, { TableCell, TableRow } from '../../components/common/Table'
-import { ShoppingBag } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ShoppingBag, Star, ArrowLeft, Search, Filter, Package, ChevronRight, RotateCcw } from 'lucide-react'
+import { PRODUCTS } from '../../data/mockData'
+
+// Mock orders data
+const MOCK_ORDERS = [
+    {
+        id: 'ORD-2024-001',
+        date: '2024-01-20',
+        status: 'delivered',
+        deliveryDate: 'Oct 30, 2025',
+        items: [
+            { ...PRODUCTS[0], quantity: 2, variant: 'Red' }
+        ]
+    },
+    {
+        id: 'ORD-2024-002',
+        date: '2024-01-18',
+        status: 'cancelled',
+        deliveryDate: 'Sep 26, 2025',
+        items: [
+            { ...PRODUCTS[3], quantity: 1, variant: 'Medium' }
+        ]
+    },
+    {
+        id: 'ORD-2024-003',
+        date: '2024-01-22',
+        status: 'delivered',
+        deliveryDate: 'Feb 16, 2025',
+        items: [
+            { ...PRODUCTS[2], quantity: 3, variant: 'Green' }
+        ]
+    },
+    {
+        id: 'ORD-2024-004',
+        date: '2024-01-15',
+        status: 'delivered',
+        deliveryDate: 'Feb 12, 2025',
+        items: [
+            { ...PRODUCTS[5], quantity: 1, variant: 'Potted' }
+        ]
+    },
+    {
+        id: 'ORD-2024-005',
+        date: '2024-01-10',
+        status: 'delivered',
+        deliveryDate: 'Feb 09, 2025',
+        items: [
+            { ...PRODUCTS[6], quantity: 2, variant: 'Small' }
+        ]
+    }
+]
 
 export default function Orders() {
-  const { user } = useAuth()
-  const [orders, setOrders] = useState([])
-  const [loading, setLoading] = useState(true)
+    const [orders] = useState(MOCK_ORDERS)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [statusFilter, setStatusFilter] = useState('all')
 
-  useEffect(() => {
-    if (!user) return
-    const load = async () => {
-      setLoading(true)
-      try {
-        const q = query(collection(db, 'orders'), where('userId', '==', user.uid))
-        const snap = await getDocs(q)
-        setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-      } finally {
-        setLoading(false)
-      }
+    const getStatusConfig = (status) => {
+        switch (status) {
+            case 'delivered':
+                return { label: 'Delivered', color: 'text-green-700', dot: 'bg-green-500', bg: 'bg-green-50' }
+            case 'cancelled':
+                return { label: 'Cancelled', color: 'text-red-600', dot: 'bg-red-500', bg: 'bg-red-50' }
+            case 'shipped':
+                return { label: 'Shipped', color: 'text-blue-600', dot: 'bg-blue-500', bg: 'bg-blue-50' }
+            default:
+                return { label: 'Processing', color: 'text-amber-600', dot: 'bg-amber-500', bg: 'bg-amber-50' }
+        }
     }
-    load()
-  }, [user])
 
-  const statusColor = (status) => {
-    switch (status) {
-      case 'placed': return 'bg-blue-100 text-blue-800'
-      case 'shipped': return 'bg-amber-100 text-amber-800'
-      case 'delivered': return 'bg-green-100 text-green-800'
-      default: return 'bg-slate-100 text-slate-800'
-    }
-  }
+    const filteredOrders = orders.filter(order => {
+        const matchesSearch = order.items[0].name.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesStatus = statusFilter === 'all' || order.status === statusFilter
+        return matchesSearch && matchesStatus
+    })
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Purchase History</h1>
-        <p className="text-slate-500 text-sm">View all your past orders.</p>
-      </div>
+    return (
+        <div className="w-full min-h-screen bg-[#f5f5f5] py-4 px-4 sm:px-6 font-['Inter',sans-serif]">
 
-      <Table headers={['Date', 'Nursery', 'Item', 'Variety', 'Qty', 'Total', 'Status']}>
-        {loading ? (
-          <TableRow><TableCell className="text-center py-8" colSpan={7}>Loading orders...</TableCell></TableRow>
-        ) : orders.length ? (
-          orders.map((o) => (
-            <TableRow key={o.id}>
-              <TableCell className="text-xs text-slate-500">{o.createdAt?.toDate?.().toLocaleDateString?.() || '-'}</TableCell>
-              <TableCell><span className="font-medium text-slate-700">{o.nurseryName || '-'}</span></TableCell>
-              <TableCell>{o.sugarcaneName || '-'}</TableCell>
-              <TableCell className="text-slate-500">{o.variety || '-'}</TableCell>
-              <TableCell>{o.quantity}</TableCell>
-              <TableCell className="font-semibold text-emerald-700">₹{o.total?.toFixed?.(2) ?? o.total}</TableCell>
-              <TableCell>
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColor(o.status)}`}>
-                  {o.status || '-'}
-                </span>
-              </TableCell>
-            </TableRow>
-          ))
-        ) : (
-          <TableRow>
-            <TableCell className="text-center py-12" colSpan={7}>
-              <div className="flex flex-col items-center justify-center text-slate-400">
-                <ShoppingBag size={40} className="mb-2" />
-                <p className="font-medium">No orders yet</p>
-                <p className="text-xs">Start shopping to see your orders here.</p>
-              </div>
-            </TableCell>
-          </TableRow>
-        )}
-      </Table>
-    </div>
-  )
+            {/* Back Button */}
+            <Link
+                to="/user"
+                className="inline-flex items-center gap-2 text-gray-600 hover:text-[#2d5a3d] mb-4 text-sm font-medium !no-underline transition-colors"
+            >
+                <ArrowLeft size={16} />
+                Back to Dashboard
+            </Link>
+
+            {/* Header */}
+            <div className="mb-5">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">My Orders</h1>
+                <p className="text-sm text-gray-500">Track and manage your plant orders</p>
+            </div>
+
+            {/* Search and Filter - Compact */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Search */}
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Search your orders here"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#2d5a3d] focus:border-transparent transition-all"
+                        />
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="relative sm:w-48">
+                        <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="w-full pl-9 pr-8 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#2d5a3d] focus:border-transparent appearance-none bg-white cursor-pointer"
+                        >
+                            <option value="all">All Orders</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {/* Orders List */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                {filteredOrders.length === 0 ? (
+                    <div className="p-12 text-center">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                            <ShoppingBag size={28} className="text-gray-400" />
+                        </div>
+                        <h3 className="text-base font-semibold text-gray-900 mb-1">No orders found</h3>
+                        <p className="text-sm text-gray-500 mb-4">
+                            {searchQuery ? 'Try adjusting your search' : 'Start shopping to see your orders here'}
+                        </p>
+                        <Link
+                            to="/user"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#2d5a3d] text-white rounded-md text-sm font-medium hover:bg-[#234830] !no-underline transition-colors"
+                        >
+                            Start Shopping
+                        </Link>
+                    </div>
+                ) : (
+                    <div>
+                        {filteredOrders.map((order, index) => {
+                            const item = order.items[0]
+                            const statusConfig = getStatusConfig(order.status)
+
+                            return (
+                                <div
+                                    key={order.id}
+                                    className={`px-5 py-4 hover:bg-gray-50 transition-colors ${index !== filteredOrders.length - 1 ? 'border-b border-gray-100' : ''
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-4">
+                                        {/* Product Image */}
+                                        <div className="w-16 h-16 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                                            <img
+                                                src={item.image}
+                                                alt={item.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+
+                                        {/* Product Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-sm font-medium text-[#1a4d8f] hover:underline cursor-pointer leading-tight">
+                                                {item.name}
+                                            </h3>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                Variant: {item.variant}
+                                            </p>
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className="w-16 text-left flex-shrink-0">
+                                            <p className="text-sm font-medium text-gray-900">
+                                                ₹{(item.price * item.quantity).toLocaleString()}
+                                            </p>
+                                        </div>
+
+                                        {/* Status & Date */}
+                                        <div className="w-52 flex-shrink-0">
+                                            <div className="flex items-center gap-1.5 mb-0.5">
+                                                <span className={`w-2 h-2 rounded-full ${statusConfig.dot}`}></span>
+                                                <span className={`text-sm font-medium ${statusConfig.color}`}>
+                                                    {statusConfig.label} on {order.deliveryDate}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 ml-3.5">
+                                                {order.status === 'delivered'
+                                                    ? 'Your item has been delivered'
+                                                    : order.status === 'cancelled'
+                                                        ? 'Your order was cancelled as per your request'
+                                                        : 'Your order is on the way'}
+                                            </p>
+                                            {order.status === 'delivered' && (
+                                                <button className="inline-flex items-center gap-1 text-xs text-[#1a4d8f] hover:underline mt-1.5 ml-3.5 font-medium">
+                                                    <Star size={12} className="text-amber-500 fill-amber-500" />
+                                                    Rate & Review Product
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+            </div>
+
+            {/* Results Counter */}
+            {filteredOrders.length > 0 && (
+                <p className="mt-3 text-xs text-gray-500">
+                    Showing {filteredOrders.length} of {orders.length} orders
+                </p>
+            )}
+        </div>
+    )
 }

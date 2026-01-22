@@ -23,6 +23,7 @@ import Search from "./pages/user/Search";
 import Orders from "./pages/user/Orders";
 import ProductDetails from "./pages/user/ProductDetails";
 import Cart from "./pages/user/Cart";
+import Profile from "./pages/user/Profile";
 import { ROLES } from "./utils/roles";
 
 function App() {
@@ -75,6 +76,7 @@ function App() {
             <Route path="/user/search" element={<Search />} />
             <Route path="/user/cart" element={<Cart />} />
             <Route path="/user/orders" element={<Orders />} />
+            <Route path="/user/profile" element={<Profile />} />
             <Route path="/user/product/:id" element={<ProductDetails />} />
           </Route>
         </Route>

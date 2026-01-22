@@ -56,12 +56,12 @@ const ProductSection = ({ title, products, onProductClick }) => {
           <Link
             key={product.id}
             to={`/user/product/${product.id}`}
-            className="min-w-[calc(50%-8px)] md:min-w-[calc(25%-12px)] lg:min-w-[calc(20%-13px)] bg-white p-3 border border-gray-100 hover:shadow-lg transition-all duration-300 group flex flex-col h-full cursor-pointer block text-left !no-underline !text-gray-900"
+            className="min-w-[calc(50%-8px)] md:min-w-[calc(25%-12px)] lg:min-w-[calc(20%-13px)] bg-white p-3 border border-gray-100 hover:shadow-xl hover:border-gray-200 transition-all duration-300 group flex flex-col h-full cursor-pointer block text-left !no-underline !text-gray-900"
             style={{ borderRadius: '16px', minHeight: '180px' }}
           >
-            <div className="relative h-[200px] w-full mb-1.5 bg-[#f5f5f5] overflow-hidden" style={{ borderRadius: '8px' }}>
+            <div className="relative h-[180px] w-full mb-2 bg-white overflow-hidden flex items-center justify-center" style={{ borderRadius: '12px' }}>
               <button
-                className="absolute top-1.5 right-1.5 w-7 h-7 bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-sm opacity-0 group-hover:opacity-100 z-10"
                 style={{ borderRadius: '50%' }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -71,43 +71,37 @@ const ProductSection = ({ title, products, onProductClick }) => {
                 <Heart size={14} className="text-gray-400 hover:text-red-500 transition-colors" />
               </button>
               {product.new && (
-                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 text-[9px] font-bold text-white bg-green-500" style={{ borderRadius: '6px' }}>
+                <span className="absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-bold text-white bg-green-500 z-10" style={{ borderRadius: '6px' }}>
                   NEW
                 </span>
               )}
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="max-w-[85%] max-h-[85%] object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-md"
               />
             </div>
-            <h3 className="!text-[16px] font-semibold !text-black mb-0.5 truncate">{product.name}</h3>
-            <div className="flex items-center gap-1 mb-1">
-              <div className="flex items-center gap-0.5 px-1 py-0.5 bg-green-600 text-white" style={{ borderRadius: '4px' }}>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1 truncate">{product.name}</h3>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-green-600 text-white" style={{ borderRadius: '4px' }}>
                 <span className="text-[10px] font-bold">{product.rating}</span>
                 <Star size={8} className="fill-white" />
               </div>
               <span className="text-[10px] text-gray-400">({product.reviews})</span>
             </div>
-            <div className="flex items-center gap-1 mb-1">
-              <span className={`text-[10px] ${product.inStock ? 'text-green-600' : 'text-red-500'}`}>●</span>
-              <span className={`text-[10px] ${product.inStock ? 'text-green-600' : 'text-red-500'}`}>
-                {product.inStock ? 'In Stock' : 'Out of Stock'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center justify-between mt-auto">
               <span className="text-lg font-bold text-gray-900">₹{typeof product.price === 'number' ? product.price.toFixed(0) : product.price}</span>
+              <button
+                className="px-3 py-1.5 text-white text-[10px] font-semibold transition-colors bg-[#2d5a3d] hover:bg-[#234830]"
+                style={{ borderRadius: '8px' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Add to cart logic here (future)
+                }}
+              >
+                Add to Cart
+              </button>
             </div>
-            <button
-              className="w-full py-1.5 text-white text-[10px] font-semibold transition-colors bg-[#2d5a3d] hover:bg-[#234830]"
-              style={{ borderRadius: '8px' }}
-              onClick={(e) => {
-                e.stopPropagation();
-                // Add to cart logic here (future)
-              }}
-            >
-              Add to Cart
-            </button>
           </Link>
         ))}
       </div>
@@ -138,67 +132,48 @@ export default function UserDashboard() {
     <div className="w-full min-h-screen bg-[#f8f9fa]" style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
       <div className="w-full px-6 sm:px-8 lg:px-12 py-6">
 
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
+        {/* Hero Section - Full Width with Natural Background */}
+        <div className="relative w-full rounded-[24px] overflow-hidden min-h-[320px] lg:min-h-[380px] mb-8">
+          {/* Background Image with blur effect */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{
+              backgroundImage: `url('https://images.pexels.com/photos/1072179/pexels-photo-1072179.jpeg?auto=compress&cs=tinysrgb&w=1200')`,
+              filter: 'blur(2px) brightness(1.05)',
+              transform: 'scale(1.1)'
+            }}
+          />
 
-          {/* Hero Section - Left */}
-          <div className="lg:col-span-2 relative bg-gradient-to-r from-[#f5ebe0] via-[#ebe0d4] to-[#e8ddd0] rounded-[24px] overflow-hidden p-6 lg:p-8 min-h-[200px]">
-            {/* Decorative Shape */}
-            <div className="absolute right-0 top-0 w-2/3 h-full pointer-events-none">
-              <svg viewBox="0 0 400 300" className="absolute right-0 top-0 h-full w-full">
-                <path d="M180,20 Q320,40 360,140 Q390,220 300,260 Q200,290 140,240 Q80,190 100,100 Q120,20 180,20" fill="#d4c4b0" opacity="0.4" />
-              </svg>
-            </div>
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#f5ebe0]/95 via-[#f5ebe0]/80 to-transparent" />
 
-            {/* Content */}
-            <div className="relative z-10 max-w-[55%]">
-              <p className="text-[10px] text-gray-500 font-medium mb-1.5 tracking-wide">Fully - Home Product</p>
-              <h1 className="text-[28px] lg:text-[34px] font-semibold text-gray-900 leading-[1.15] mb-3" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-                Plant for Interior<br />Decoration
+          {/* Content */}
+          <div className="relative z-10 flex items-center h-full min-h-[320px] lg:min-h-[380px] px-8 lg:px-12">
+            <div className="max-w-[45%]">
+              <h1 className="text-[32px] lg:text-[44px] font-medium text-gray-900 leading-[1.1] mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                Plant for<br />Interior<br />Decoration
               </h1>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs text-gray-500">Start from</span>
-                <span className="px-2.5 py-1 bg-[#2d5a3d] text-white text-sm font-bold rounded-lg">$220</span>
-              </div>
-              <button className="text-[11px] font-semibold text-gray-700 underline underline-offset-4 decoration-1 hover:text-[#2d5a3d] transition-colors tracking-wide">
-                SHOP NOW
-              </button>
-            </div>
-
-            {/* Hero Image - Rose */}
-            <div className="absolute right-2 lg:right-6 bottom-0 w-36 lg:w-44 h-44 lg:h-52">
-              <img
-                src="https://images.pexels.com/photos/931177/pexels-photo-931177.jpeg?auto=compress&cs=tinysrgb&w=400"
-                alt="Rose Plant"
-                className="w-full h-full object-contain drop-shadow-2xl"
-              />
-            </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="space-y-4">
-            {/* Monstera Card */}
-            <div className="relative bg-gradient-to-br from-[#e8f5e9] to-[#c8e6c9] rounded-[20px] p-4 overflow-hidden min-h-[105px]">
-              <p className="text-[9px] text-gray-500 font-medium uppercase tracking-widest mb-1">Claim Fresh Scents</p>
-              <h3 className="text-[19px] font-semibold text-gray-900 mb-1" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Monsera</h3>
-              <p className="text-[10px] text-gray-500 mb-2">Start from $12</p>
-              <button className="px-3 py-1 bg-white text-[10px] font-semibold text-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                SHOP Plan at
-              </button>
-              <div className="absolute right-1 bottom-0 w-20 h-24">
-                <img src="https://images.pexels.com/photos/3125195/pexels-photo-3125195.jpeg?auto=compress&cs=tinysrgb&w=200" alt="Monstera" className="w-full h-full object-contain" />
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm text-gray-600">Start from</span>
+                <span className="px-3 py-1.5 bg-[#2d5a3d] text-white text-base font-bold rounded-lg shadow-md">$20</span>
               </div>
             </div>
 
-            {/* Plant for Garden Card */}
-            <div className="relative bg-gradient-to-br from-[#2d5a3d] to-[#1e3d2a] rounded-[20px] p-4 overflow-hidden min-h-[105px] text-white">
-              <p className="text-[9px] text-white/60 font-medium uppercase tracking-widest mb-1">A Quality Home</p>
-              <h3 className="text-base font-semibold mb-2" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Plant for Garden</h3>
-              <button className="text-[10px] font-semibold underline underline-offset-2 hover:text-green-200 transition-colors tracking-wide">
-                SHOP NOW
-              </button>
-              <div className="absolute right-1 bottom-0 w-16 h-20">
-                <img src="https://images.pexels.com/photos/1084199/pexels-photo-1084199.jpeg?auto=compress&cs=tinysrgb&w=200" alt="Garden Plant" className="w-full h-full object-contain opacity-90" />
+            {/* Hero Image - Red Rose in Pot with Small Plant */}
+            <div className="absolute right-4 lg:right-12 bottom-0 w-[50%] lg:w-[45%] h-full flex items-end justify-center pointer-events-none">
+              {/* Main Rose Image */}
+              <div className="relative flex items-end gap-2">
+                <img
+                  src="https://images.pexels.com/photos/4751978/pexels-photo-4751978.jpeg?auto=compress&cs=tinysrgb&w=600"
+                  alt="Red Rose Plant"
+                  className="h-[280px] lg:h-[340px] object-contain drop-shadow-2xl"
+                />
+                {/* Small plant beside */}
+                <img
+                  src="https://images.pexels.com/photos/1084199/pexels-photo-1084199.jpeg?auto=compress&cs=tinysrgb&w=300"
+                  alt="Small Plant"
+                  className="h-[120px] lg:h-[160px] object-contain drop-shadow-xl -ml-4 mb-2"
+                />
               </div>
             </div>
           </div>
