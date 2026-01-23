@@ -8,7 +8,11 @@ export default function Cart() {
     const [cartItems, setCartItems] = useState([
         { ...PRODUCTS[0], quantity: 2 },
         { ...PRODUCTS[1], quantity: 1 },
-        { ...PRODUCTS[2], quantity: 3 }
+        { ...PRODUCTS[2], quantity: 3 },
+        { ...PRODUCTS[3], quantity: 1 },
+        { ...PRODUCTS[4], quantity: 2 },
+        { ...PRODUCTS[5], quantity: 1 },
+        { ...PRODUCTS[6], quantity: 1 }
     ])
 
     const updateQuantity = (id, change) => {
@@ -51,100 +55,94 @@ export default function Cart() {
     }
 
     return (
-        <div className="w-full min-h-screen bg-[#f8f9fa] py-6 px-6 sm:px-8 lg:px-12" style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
+        <div className="w-full bg-[#f8f9fa] pt-5 pb-5 px-6 sm:px-8 lg:px-12" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
 
-            {/* Back Button */}
-            <Link
-                to="/user"
-                className="flex items-center gap-2 text-gray-500 hover:text-[#2d5a3d] mb-6 transition-colors font-medium group !no-underline w-fit"
-            >
-                <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center group-hover:border-[#2d5a3d] group-hover:bg-[#f0fdf4] transition-all">
-                    <ArrowLeft size={16} />
-                </div>
-                Back to Dashboard
-            </Link>
+
 
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
-                <p className="text-gray-500 text-sm mt-1">{cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your cart</p>
+                <h1 className="text-xl font-bold text-gray-900 font-serif">Shopping Cart</h1>
+                <p className="text-gray-500 text-xs mt-1">{cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your cart</p>
             </div>
 
             {/* Two Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* Cart Items - Left Column */}
-                <div className="lg:col-span-2 space-y-4">
-                    {cartItems.map((item) => (
-                        <div key={item.id} className="bg-white rounded-2xl p-4 border border-gray-100 hover:shadow-sm transition-shadow">
-                            <div className="flex gap-4">
-                                {/* Product Image */}
-                                <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden">
-                                    <img
-                                        src={item.image}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-
-                                {/* Product Info */}
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-gray-900 mb-1 truncate">{item.name}</h3>
-                                    <p className="text-sm text-gray-500 mb-2">
-                                        {item.inStock ? (
-                                            <span className="text-green-600">In Stock</span>
-                                        ) : (
-                                            <span className="text-red-500">Out of Stock</span>
-                                        )}
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-lg font-bold text-[#2d5a3d]">₹{item.price}</span>
-                                        <span className="text-xs text-gray-400">per item</span>
+                <div className="lg:col-span-2">
+                    <div className="space-y-2 max-h-[570px] overflow-y-auto pr-2 custom-scrollbar">
+                        {cartItems.map((item) => (
+                            <div key={item.id} className="bg-white rounded-2xl p-3 border border-gray-100 hover:shadow-sm transition-shadow">
+                                <div className="flex gap-4">
+                                    {/* Product Image */}
+                                    <div className="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden">
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
-                                </div>
 
-                                {/* Quantity Controls + Remove */}
-                                <div className="flex flex-col items-end gap-3">
-                                    {/* Quantity Selector */}
-                                    <div className="flex items-center border border-gray-300 rounded-lg h-9">
+                                    {/* Product Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-semibold text-lg text-gray-900 truncate font-serif">{item.name}</h4>
+                                        <p className="text-[10px] text-gray-500 mb-1">Indoor Plant</p>
+                                        <p className="text-xs text-gray-500 mb-1">
+                                            {item.inStock ? (
+                                                <span className="text-green-600">In Stock</span>
+                                            ) : (
+                                                <span className="text-red-500">Out of Stock</span>
+                                            )}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base font-bold text-[#2d5a3d]">₹{item.price}</span>
+                                            <span className="text-xs text-gray-400">per item</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Quantity Controls + Remove */}
+                                    <div className="flex flex-col items-end gap-2">
+                                        {/* Quantity Selector */}
+                                        <div className="flex items-center border border-gray-300 rounded-lg h-7">
+                                            <button
+                                                onClick={() => updateQuantity(item.id, -1)}
+                                                className="w-7 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors rounded-l-lg border-r border-gray-300"
+                                            >
+                                                <Minus size={12} />
+                                            </button>
+                                            <span className="w-8 text-center font-bold text-xs text-gray-900">{item.quantity}</span>
+                                            <button
+                                                onClick={() => updateQuantity(item.id, 1)}
+                                                className="w-7 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors rounded-r-lg border-l border-gray-300"
+                                            >
+                                                <Plus size={12} />
+                                            </button>
+                                        </div>
+
+                                        {/* Item Total */}
+                                        <div className="text-right">
+                                            <p className="text-sm font-bold text-gray-900">₹{(item.price * item.quantity).toFixed(0)}</p>
+                                        </div>
+
+                                        {/* Remove Button */}
                                         <button
-                                            onClick={() => updateQuantity(item.id, -1)}
-                                            className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors rounded-l-lg border-r border-gray-300"
+                                            onClick={() => removeItem(item.id)}
+                                            className="text-red-500 hover:text-red-600 transition-colors p-1"
+                                            title="Remove item"
                                         >
-                                            <Minus size={14} />
-                                        </button>
-                                        <span className="w-10 text-center font-bold text-sm text-gray-900">{item.quantity}</span>
-                                        <button
-                                            onClick={() => updateQuantity(item.id, 1)}
-                                            className="w-8 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors rounded-r-lg border-l border-gray-300"
-                                        >
-                                            <Plus size={14} />
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
-
-                                    {/* Item Total */}
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold text-gray-900">₹{(item.price * item.quantity).toFixed(0)}</p>
-                                    </div>
-
-                                    {/* Remove Button */}
-                                    <button
-                                        onClick={() => removeItem(item.id)}
-                                        className="text-red-500 hover:text-red-600 transition-colors p-1"
-                                        title="Remove item"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
 
                 {/* Order Summary - Right Column */}
                 <div className="lg:col-span-1">
                     <div className="bg-white rounded-2xl p-6 border border-gray-100 sticky top-24">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
+                        <h2 className="text-lg font-bold text-gray-900 mb-4 font-serif">Order Summary</h2>
 
                         <div className="space-y-3 mb-4 pb-4 border-b border-gray-100">
                             <div className="flex justify-between text-sm">
@@ -178,7 +176,9 @@ export default function Cart() {
                             </p>
                         )}
 
-                        <button className="w-full bg-[#2d5a3d] text-white h-11 rounded-lg font-semibold text-sm hover:bg-[#234830] transition-all shadow-md shadow-green-900/10 active:scale-[0.99] mb-3">
+                        <button
+                            style={{ borderRadius: "10px" }}
+                            className="w-full bg-[#2d5a3d] text-white h-11  font-semibold text-sm hover:bg-[#234830] transition-all shadow-md shadow-green-900/10 active:scale-[0.99] mb-3">
                             Proceed to Checkout
                         </button>
 

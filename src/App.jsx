@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Protected from "./components/Protected";
-import DashboardLayout from "./components/layouts/DashboardLayout";
+import UserLayout from "./layouts/UserLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import OwnerLayout from "./layouts/OwnerLayout";
 import Login from "./pages/auth/Login";
@@ -18,8 +18,8 @@ import AddProduct from "./pages/owner/AddProduct";
 import OwnerOrders from "./pages/owner/Orders";
 import OwnerReports from "./pages/owner/Reports";
 import OwnerSettings from "./pages/owner/Settings";
-import UserDashboard from "./pages/user/UserDashboard";
-import Search from "./pages/user/Search";
+import Dashboard from "./pages/user/Dashboard";
+import Categories from "./pages/user/Categories";
 import Orders from "./pages/user/Orders";
 import ProductDetails from "./pages/user/ProductDetails";
 import Cart from "./pages/user/Cart";
@@ -71,9 +71,9 @@ function App() {
 
         {/* USER */}
         <Route element={<Protected roles={[ROLES.USER]} />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/user" element={<UserDashboard />} />
-            <Route path="/user/search" element={<Search />} />
+          <Route element={<UserLayout />}>
+            <Route path="/user" element={<Dashboard />} />
+            <Route path="/user/categories" element={<Categories />} />
             <Route path="/user/cart" element={<Cart />} />
             <Route path="/user/orders" element={<Orders />} />
             <Route path="/user/profile" element={<Profile />} />

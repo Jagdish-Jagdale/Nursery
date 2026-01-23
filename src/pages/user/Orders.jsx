@@ -79,14 +79,7 @@ export default function Orders() {
     return (
         <div className="w-full min-h-screen bg-[#f5f5f5] py-4 px-4 sm:px-6 font-['Inter',sans-serif]">
 
-            {/* Back Button */}
-            <Link
-                to="/user"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-[#2d5a3d] mb-4 text-sm font-medium !no-underline transition-colors"
-            >
-                <ArrowLeft size={16} />
-                Back to Dashboard
-            </Link>
+
 
             {/* Header */}
             <div className="mb-5">

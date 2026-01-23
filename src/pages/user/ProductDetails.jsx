@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     ChevronLeft, ChevronRight, Star, ShoppingCart,
@@ -24,6 +24,26 @@ export default function ProductDetails() {
         }
         window.scrollTo(0, 0);
     }, [id]);
+
+    const relatedProducts = React.useMemo(() => {
+        return [...PRODUCTS]
+            .filter(p => p.id !== (product ? product.id : null))
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 8);
+    }, [product]);
+
+    const scrollContainerRef = useRef(null)
+
+    const scroll = (direction) => {
+        if (scrollContainerRef.current) {
+            const scrollAmount = 300
+            const newScrollLeft = scrollContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount)
+            scrollContainerRef.current.scrollTo({
+                left: newScrollLeft,
+                behavior: 'smooth'
+            })
+        }
+    }
 
     if (!product) {
         return (
@@ -62,25 +82,14 @@ export default function ProductDetails() {
         }
     ];
 
-    const relatedProducts = PRODUCTS.filter(p => p.id !== product.id).slice(0, 3);
+
 
     const nextImage = () => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
     const prevImage = () => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
-            {/* Breadcrumb */}
-            <div className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-12 flex items-center text-sm text-gray-500">
-                    <Link to="/user" className="hover:text-[#2d5a3d] flex items-center gap-1">
-                        <Home size={14} /> Home
-                    </Link>
-                    <ChevronRight size={14} className="mx-2" />
-                    <span className="cursor-pointer hover:text-[#2d5a3d]">Plants</span>
-                    <ChevronRight size={14} className="mx-2" />
-                    <span className="text-gray-900 font-medium truncate">{product.name}</span>
-                </div>
-            </div>
+
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
@@ -97,10 +106,10 @@ export default function ProductDetails() {
                                 <div className="absolute top-4 right-4 z-10">
                                     <button
                                         onClick={() => setIsWishlisted(!isWishlisted)}
-                                        className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all ${isWishlisted ? 'bg-red-50 text-red-500' : 'bg-white text-gray-400 hover:text-red-500'
+                                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isWishlisted ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
                                             }`}
                                     >
-                                        <Heart size={20} fill={isWishlisted ? "currentColor" : "none"} />
+                                        <Heart size={30} fill={isWishlisted ? "currentColor" : "none"} />
                                     </button>
                                 </div>
                                 <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -249,30 +258,101 @@ export default function ProductDetails() {
                     </div>
                 </div>
 
+
                 {/* Related Products */}
-                <div className="mt-12">
-                    <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6">You Might Also Like</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="mt-12 mb-12 relative">
+                    <h2 className="text-2xl font-serif font-bold text-gray-900 mb-6 px-1">You Might Also Like</h2>
+
+                    <button
+                        onClick={() => scroll('left')}
+                        className="hidden lg:flex absolute -left-12 top-[60%] -translate-y-1/2 z-50 w-12 h-12 !rounded-full bg-white/90 !backdrop-blur-md shadow-2xl border-2 border-white items-center justify-center text-[#2d5a3d] hover:scale-110 transition-all"
+                    >
+                        <ChevronLeft size={28} strokeWidth={2.5} />
+                    </button>
+
+                    <button
+                        onClick={() => scroll('right')}
+                        className="hidden lg:flex absolute -right-12 top-[60%] -translate-y-1/2 z-50 w-12 h-12 !rounded-full bg-white/90 !backdrop-blur-md shadow-2xl border-2 border-white items-center justify-center text-[#2d5a3d] hover:scale-110 transition-all"
+                    >
+                        <ChevronRight size={28} strokeWidth={2.5} />
+                    </button>
+
+                    <div
+                        ref={scrollContainerRef}
+                        className="flex gap-4 overflow-x-auto no-scrollbar pb-4 scroll-smooth px-1"
+                    >
                         {relatedProducts.map((p) => (
-                            <div key={p.id} onClick={() => navigate(`/user/product/${p.id}`)} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-300">
-                                <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                                    <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="w-8 h-8 bg-white rounded-full shadow-sm flex items-center justify-center text-gray-400 hover:text-red-500">
-                                            <Heart size={16} />
-                                        </button>
+                            <Link
+                                key={p.id}
+                                to={`/user/product/${p.id}`}
+                                onClick={() => window.scrollTo(0, 0)}
+                                className="flex-none w-[200px] sm:w-[220px] md:w-[240px] lg:w-[260px] bg-white p-4 rounded-[32px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full cursor-pointer block text-left relative border border-gray-100 !no-underline !text-gray-900"
+                            >
+                                {/* Top Row: Variants & Wishlist */}
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-1 bg-gray-100/80 px-2 py-1 rounded-full backdrop-blur-sm">
+                                        <div className="w-2 h-2 rounded-full bg-[#E6A57E]"></div>
+                                        <div className="w-2 h-2 rounded-full bg-[#2d5a3d]"></div>
                                     </div>
+                                    <button
+                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            // Heart Logic
+                                        }}
+                                    >
+                                        <Heart size={20} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                                    </button>
                                 </div>
-                                <div className="p-4">
-                                    <h3 className="font-medium text-gray-900 mb-1">{p.name}</h3>
+
+                                {/* Image Area */}
+                                <div className="relative h-[180px] w-full mb-4 flex items-center justify-center">
+                                    {p.new && (
+                                        <span className="absolute top-0 right-0 px-2 py-1 text-[10px] font-bold text-white bg-green-500 rounded-full z-10 shadow-sm">
+                                            NEW
+                                        </span>
+                                    )}
+                                    <img
+                                        src={p.image}
+                                        alt={p.name}
+                                        className="max-w-full max-h-full object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                </div>
+
+                                {/* Content Area */}
+                                <div className="mt-auto">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-1 truncate font-serif tracking-tight">{p.name}</h3>
+
+                                    {/* Rating Section (Green Badge) */}
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="flex items-center gap-1 px-2 py-0.5 bg-green-700 text-white rounded-md">
+                                            <span className="text-[10px] font-bold">{p.rating}</span>
+                                            <Star size={8} className="fill-white text-white" />
+                                        </div>
+                                        <span className="text-[11px] text-gray-500 font-medium">({p.reviews})</span>
+                                    </div>
+
+                                    {/* Price & Action */}
                                     <div className="flex items-center justify-between">
-                                        <span className="font-bold text-[#2d5a3d]">₹{p.price}</span>
-                                        <button className="w-8 h-8 rounded-full bg-[#f0fdf4] text-[#2d5a3d] flex items-center justify-center hover:bg-[#2d5a3d] hover:text-white transition-colors">
-                                            <Plus size={16} />
+                                        <div>
+                                            <span className="text-xs text-gray-400 block mb-0.5">Price</span>
+                                            <span className="text-xl font-bold text-[#b48a5f]">₹{typeof p.price === 'number' ? p.price.toFixed(0) : p.price}</span>
+                                        </div>
+                                        <button
+                                            style={{ borderRadius: "18px" }}
+                                            className="px-2 py-2 bg-[#2d5a3d] hover:bg-[#234830] text-white text-[10px] font-bold rounded-lg transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                // Add to cart logic
+                                            }}
+                                        >
+                                            <ShoppingCart size={20} />
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>

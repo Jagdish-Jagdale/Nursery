@@ -14,12 +14,12 @@ export default function UserNavbar() {
     const categoryRef = useRef(null)
 
     const CATEGORIES = [
-        { name: 'Indoor Plants', path: '/user/search?category=indoor' },
-        { name: 'Outdoor Plants', path: '/user/search?category=outdoor' },
-        { name: 'Flowering Plants', path: '/user/search?category=flowering' },
-        { name: 'Succulents & Cactus', path: '/user/search?category=succulents' },
-        { name: 'Herbs & Medicinal', path: '/user/search?category=herbs' },
-        { name: 'Fruit Plants', path: '/user/search?category=fruit' },
+        { name: 'Indoor Plants', path: '/user/categories?category=Indoor Plants' },
+        { name: 'Outdoor Plants', path: '/user/categories?category=Outdoor Plants' },
+        { name: 'Flowering Plants', path: '/user/categories?category=Flowering Plants' },
+        { name: 'Succulents & Cactus', path: '/user/categories?category=Succulents & Cactus' },
+        { name: 'Herbs & Medicinal', path: '/user/categories?category=Herbs & Medicinal' },
+        { name: 'Fruit Plants', path: '/user/categories?category=Fruit Plants' },
     ]
 
     useEffect(() => {
@@ -51,12 +51,12 @@ export default function UserNavbar() {
 
                     {/* Logo */}
                     <Link to="/user" className="flex items-center gap-2 !no-underline flex-shrink-0">
-                        <div className="w-9 h-9 bg-[#2d5a3d] rounded-[18px] flex items-center justify-center">
-                            <span className="text-white text-xl">🌿</span>
+                        <div className="w-7 h-7 sm:w-9 sm:h-9 bg-[#2d5a3d] rounded-[14px] sm:rounded-[18px] flex items-center justify-center">
+                            <span className="text-white text-base sm:text-xl">🌿</span>
                         </div>
                         <div className="flex flex-col leading-tight">
-                            <span className="text-[20px] font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', serif" }}>Nursery</span>
-                            <span className="text-[10px] text-[#2d5a3d] uppercase tracking-[0.15em] font-medium -mt-0.5">Marketplace</span>
+                            <span className="text-[16px] sm:text-[20px] font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', serif" }}>Nursery</span>
+                            <span className="text-[8px] sm:text-[10px] text-[#2d5a3d] uppercase tracking-[0.15em] font-medium -mt-0.5">Marketplace</span>
                         </div>
                     </Link>
 
@@ -115,15 +115,16 @@ export default function UserNavbar() {
                     </div>
 
                     {/* Right Side */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 ml-auto">
                         {/* Cart */}
                         <Link to="/user/cart" className="relative p-2 hover:bg-gray-50 rounded-[18px] transition-colors !no-underline">
-                            <ShoppingCart size={19} className="text-gray-600" />
-                            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#2d5a3d] rounded-full text-[10px] font-bold text-white flex items-center justify-center">2</span>
+                            <ShoppingCart size={19} className="text-gray-600 block sm:hidden w-4 h-4" />
+                            <ShoppingCart size={19} className="text-gray-600 hidden sm:block" />
+                            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 sm:w-4 sm:h-4 bg-[#2d5a3d] rounded-full text-[8px] sm:text-[10px] font-bold text-white flex items-center justify-center">2</span>
                         </Link>
 
                         {/* Profile */}
-                        <div className="relative" ref={dropdownRef}>
+                        <div className="relative hidden sm:block" ref={dropdownRef}>
                             <button
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
                                 className="flex items-center gap-2 py-1.5 px-2 rounded-[18px] hover:bg-gray-50 transition-all cursor-pointer outline-none"
@@ -136,7 +137,6 @@ export default function UserNavbar() {
                                         {user?.email?.[0]?.toUpperCase() || 'U'}
                                     </span>
                                 </div>
-                                <ChevronDown size={14} className={`text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
 
                             {dropdownOpen && (
@@ -200,6 +200,19 @@ export default function UserNavbar() {
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* Mobile Search Bar - Visible only on small screens below the header */}
+                <div className="md:hidden pb-2 px-1">
+                    <div className="relative w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="w-full h-8 pl-8 pr-4 bg-gray-50 border border-gray-200 text-xs focus:outline-none focus:border-[#2d5a3d] focus:bg-white transition-all shadow-sm"
+                            style={{ borderRadius: '16px' }}
+                        />
                     </div>
                 </div>
             </div>
