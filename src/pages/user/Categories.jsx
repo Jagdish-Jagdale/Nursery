@@ -1,13 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ShoppingCart, Star, Heart, ChevronRight, Filter, ChevronDown, Check } from 'lucide-react';
+import { ShoppingCart, Star, Heart, ChevronRight, ChevronLeft, Filter, ChevronDown, Check, Home } from 'lucide-react';
 import { PRODUCTS } from '../../data/mockData';
 import Breadcrumbs from '../../components/Breadcrumbs';
+
+// Category circles with images
+const CATEGORIES = [
+    { id: 'all', name: 'All', image: 'https://images.pexels.com/photos/1470405/pexels-photo-1470405.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { id: 'indoor', name: 'Indoor', image: 'https://images.pexels.com/photos/796602/pexels-photo-796602.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { id: 'outdoor', name: 'Outdoor', image: 'https://images.pexels.com/photos/1072179/pexels-photo-1072179.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { id: 'flowering', name: 'Flowering', image: 'https://images.pexels.com/photos/701665/pexels-photo-701665.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { id: 'succulents', name: 'Succulents', image: 'https://images.pexels.com/photos/1903965/pexels-photo-1903965.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { id: 'herbs', name: 'Herbs', image: 'https://images.pexels.com/photos/2583852/pexels-photo-2583852.jpeg?auto=compress&cs=tinysrgb&w=150' },
+    { id: 'fruit', name: 'Fruit', image: 'https://images.pexels.com/photos/2363345/pexels-photo-2363345.jpeg?auto=compress&cs=tinysrgb&w=150' },
+]
 
 export default function Categories() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const selectedCategory = searchParams.get('category') || 'Plants';
+    const [activeCategory, setActiveCategory] = useState('all');
+    const [isSticky, setIsSticky] = useState(false);
+    const categoryContainerRef = useRef(null);
 
     // Sidebar Data (Static for UI matching)
     const filters = [
@@ -31,9 +45,86 @@ export default function Categories() {
         setSearchParams({ category });
     };
 
+    // Sticky behavior for category circles
+    useEffect(() => {
+        const checkPosition = () => {
+            if (!categoryContainerRef.current) {
+                return
+            }
+            const rect = categoryContainerRef.current.getBoundingClientRect()
+            setIsSticky(rect.top <= 80)
+        }
+
+        const intervalId = setInterval(checkPosition, 50)
+        window.addEventListener('scroll', checkPosition, { capture: true })
+        window.addEventListener('resize', checkPosition)
+
+        return () => {
+            clearInterval(intervalId)
+            window.removeEventListener('scroll', checkPosition, { capture: true })
+            window.removeEventListener('resize', checkPosition)
+        }
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#f8f9fa] font-sans text-gray-900 pt-8">
+            {/* Category Circles - Sticky on all screen sizes */}
+            <div
+                ref={categoryContainerRef}
+                className={`sticky lg:relative top-[80px] md:top-[72px] lg:top-auto z-40 transition-all duration-300 mb-6 lg:mb-10 px-0 sm:px-8 group/cat ${isSticky ? 'backdrop-blur-md shadow-sm -mx-6 sm:-mx-8 lg:-mx-12 px-6 sm:px-8 lg:px-12' : ''}`}
+                style={{
+                    backgroundColor: isSticky ? '#ffffff' : 'transparent',
+                    paddingTop: isSticky ? '8px' : '',
+                    paddingBottom: isSticky ? '5px' : ''
+                }}
+            >
+                <button
+                    onClick={() => {
+                        const container = document.getElementById('category-scroll');
+                        if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+                    }}
+                    className={`hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 items-center justify-center text-gray-600 hover:text-[#2d5a3d] hover:scale-110 transition-all opacity-0 group-hover/cat:opacity-100 ${isSticky ? 'left-4' : ''}`}
+                >
+                    <ChevronLeft size={20} />
+                </button>
 
+                <button
+                    onClick={() => {
+                        const container = document.getElementById('category-scroll');
+                        if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+                    }}
+                    className={`hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 items-center justify-center text-gray-600 hover:text-[#2d5a3d] hover:scale-110 transition-all opacity-0 group-hover/cat:opacity-100 ${isSticky ? 'right-4' : ''}`}
+                >
+                    <ChevronRight size={20} />
+                </button>
+
+                <div
+                    id="category-scroll"
+                    className="flex items-center justify-start lg:justify-center gap-3 sm:gap-8 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1"
+                >
+                    {CATEGORIES.map(cat => (
+                        <button
+                            key={cat.id}
+                            onClick={() => {
+                                setActiveCategory(cat.id);
+                                navigate(`/user/categories?category=${encodeURIComponent(cat.name)}`);
+                            }}
+                            className={`flex flex-col items-center gap-1 transition-all duration-300 flex-shrink-0 group`}
+                        >
+                            <div className={`rounded-full overflow-hidden transition-all duration-300 ${isSticky ? 'w-12 h-12' : 'w-14 h-14 sm:w-20 sm:h-20'} ${!isSticky && activeCategory === cat.id ? 'ring-2 ring-[#2d5a3d] ring-offset-2' : 'group-hover:ring-2 group-hover:ring-gray-200 group-hover:ring-offset-2'}`}>
+                                <img
+                                    src={cat.image}
+                                    alt={cat.name}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                />
+                            </div>
+                            <span className={`transition-all duration-300 text-center ${isSticky ? "text-xs sm:text-sm font-medium text-gray-700" : "text-[10px] sm:text-sm text-gray-600"} ${activeCategory === cat.id ? 'text-[#2d5a3d] font-bold' : ''}`}>
+                                {cat.name}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex flex-col lg:flex-row gap-6">

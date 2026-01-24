@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Search, ShoppingCart, User, LogOut, ChevronDown, Globe } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useState, useRef, useEffect } from 'react'
@@ -6,6 +6,8 @@ import { useState, useRef, useEffect } from 'react'
 export default function UserNavbar() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
+    const location = useLocation()
+    const isDashboard = location.pathname === '/user' || location.pathname === '/user/'
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
     const [selectedLanguage, setSelectedLanguage] = useState('English')
@@ -55,22 +57,24 @@ export default function UserNavbar() {
     }
 
     return (
-        <nav className={`bg-white sticky top-0 z-[100] border-b border-gray-100 transition-all duration-300 ${isScrolled ? 'shadow-sm' : ''}`} style={{ fontFamily: "'Inter', sans-serif", width: '100%' }}>
-            <div className="w-full px-6 sm:px-8 lg:px-12" style={{ maxWidth: '100%' }}>
-                <div className={`flex items-center transition-all duration-300 ${isScrolled ? 'h-16' : 'h-20'}`}>
+        <nav className={`bg-white border-b border-gray-100 transition-all duration-300 md:sticky md:top-0 md:z-[100] ${isScrolled ? 'md:shadow-sm' : ''}`} style={{ fontFamily: "'Inter', sans-serif", width: '100%' }}>
+
+            {/* Sticky/Fixed Header for Mobile (Logo + Cart + Icons) */}
+            <div className={`${isDashboard ? 'fixed top-0 left-0 right-0 z-[100]' : 'relative'} bg-white w-full px-6 sm:px-8 lg:px-20 border-b md:border-none border-gray-100 md:relative md:top-auto md:z-auto md:bg-transparent md:px-0`} style={{ maxWidth: '100%' }}>
+                <div className={`flex items-center transition-all duration-300 ${isScrolled ? 'h-25' : 'h-15'}`}>
 
                     {/* Logo */}
                     <Link to="/user" className="flex items-center gap-2 !no-underline flex-shrink-0">
-                        <div className="w-7 h-7 sm:w-9 sm:h-9 bg-[#2d5a3d] rounded-[14px] sm:rounded-[18px] flex items-center justify-center">
-                            <span className="text-white text-base sm:text-xl">🌿</span>
+                        <div className="w-10 h-10 sm:w-10 sm:h-10 bg-[#2d5a3d] rounded-[25px] sm:rounded-[18px] flex items-center justify-center">
+                            <span className="text-white text-lg sm:text-lg">🌿</span>
                         </div>
                         <div className="flex flex-col leading-tight">
-                            <span className="text-[16px] sm:text-[20px] font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', serif" }}>Nursery</span>
-                            <span className="text-[8px] sm:text-[10px] text-[#2d5a3d] uppercase tracking-[0.15em] font-medium -mt-0.5">Marketplace</span>
+                            <span className="text-[20px] sm:text-[20px] font-semibold text-gray-900" style={{ fontFamily: "'Playfair Display', serif" }}>Nursery</span>
+                            <span className="text-[10px] sm:text-[10px] text-[#2d5a3d] uppercase tracking-[0.15em] font-medium -mt-0.5">Marketplace</span>
                         </div>
                     </Link>
 
-                    {/* Search Bar - Centered & Wider */}
+                    {/* Search Bar - Centered & Wider (Desktop Only) */}
                     <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-auto">
                         <div className="relative w-full max-w-lg">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
@@ -128,7 +132,7 @@ export default function UserNavbar() {
                     <div className="flex items-center gap-3 ml-auto">
                         {/* Cart */}
                         <Link to="/user/cart" className="relative p-2 hover:bg-gray-50 rounded-[18px] transition-colors !no-underline">
-                            <ShoppingCart size={19} className="text-gray-600 block sm:hidden w-4 h-4" />
+                            <ShoppingCart size={19} className="text-gray-600 block sm:hidden w-6 h-6" />
                             <ShoppingCart size={19} className="text-gray-600 hidden sm:block" />
                             <span className="absolute -top-0.5 -right-0.5 w-3 h-3 sm:w-4 sm:h-4 bg-[#2d5a3d] rounded-full text-[8px] sm:text-[10px] font-bold text-white flex items-center justify-center">2</span>
                         </Link>
@@ -212,28 +216,38 @@ export default function UserNavbar() {
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Mobile Search Bar - Visible only on small screens below the header */}
-                <div className={`md:hidden overflow-hidden transition-all duration-300 ${isScrolled ? 'h-0 opacity-0' : 'h-12 opacity-100'} px-1 pb-2`}>
-                    <div className="relative w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                        <input
-                            type="text"
-                            placeholder="Search plants..."
-                            className="w-full h-8 pl-8 pr-4 bg-gray-50 border border-gray-200 text-xs focus:outline-none focus:border-[#2d5a3d] focus:bg-white transition-all shadow-sm font-serif"
-                            style={{ borderRadius: '0px', fontFamily: "'Playfair Display', serif" }}
-                        />
-                    </div>
-                </div>
+            {/* Spacer for Fixed Header on Mobile */}
+            {isDashboard && (
+                <div className={`md:hidden transition-all duration-300 ${isScrolled ? 'h-16' : 'h-16'}`}></div>
+            )}
 
-                {/* Condensed Mobile Search Label (visible when scrolled) */}
-                <div className={`md:hidden flex items-center justify-between overflow-hidden transition-all duration-300 ${isScrolled ? 'h-12 opacity-100 pb-2' : 'h-0 opacity-0'}`}>
-                    <button className="flex items-center gap-2 bg-white px-4 py-1.5 border border-gray-100 w-full text-left h-full shadow-sm rounded-lg">
-                        <Search size={14} className="text-gray-500" />
-                        <span className="text-xs text-gray-500 font-medium" style={{ fontFamily: "'Playfair Display', serif" }}>Search plants...</span>
-                    </button>
-                </div>
+            <div className="w-full px-6 sm:px-8 lg:px-20" style={{ maxWidth: '100%' }}>
+                {isDashboard && (
+                    <>
+                        {/* Mobile Search Bar - Visible only on small screens below the header */}
+                        <div className={`md:hidden overflow-hidden transition-all duration-300 ${isScrolled ? 'h-0 opacity-0' : 'h-12 opacity-100'} px-1 pb-1 pt-1`}>
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                                <input
+                                    type="text"
+                                    placeholder="Search plants..."
+                                    className="w-full h-10 pl-9 pr-4 bg-gray-50 border border-gray-200 text-xs focus:outline-none focus:border-[#2d5a3d] focus:bg-white transition-all font-sans"
+                                    style={{ borderRadius: '18px', fontFamily: "'Inter', sans-serif" }}
+                                />
+                            </div>
+                        </div>
 
+                        {/* Condensed Mobile Search Label (visible when scrolled) */}
+                        <div className={`md:hidden flex items-center justify-between overflow-hidden transition-all duration-300 ${isScrolled ? 'h-15 opacity-100 mt-2' : 'h-0 opacity-0'} pt-1`}>
+                            <button className="flex items-center gap-2 bg-white px-4 py-1.5 border border-gray-100 w-full text-left h-full shadow-sm rounded-[18px]">
+                                <Search size={15} className="text-gray-500" />
+                                <span className="text-xs text-gray-500 font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>Search plants...</span>
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
         </nav>
     )

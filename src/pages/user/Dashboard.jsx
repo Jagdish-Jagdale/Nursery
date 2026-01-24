@@ -59,8 +59,8 @@ const ProductSection = ({ title, products, onProductClick }) => {
   }
 
   return (
-    <div className="mt-12 mb-4 relative mx-5">
-      <div className="flex items-center justify-between mb-1">
+    <div className="mt-12 mb-4 relative -mx-6 sm:mx-5 lg:mx-12">
+      <div className="flex items-center justify-between mb-1 px-6 sm:px-0">
         <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
       </div>
 
@@ -80,35 +80,35 @@ const ProductSection = ({ title, products, onProductClick }) => {
 
       <div
         ref={scrollContainerRef}
-        className="flex gap-4 overflow-x-auto no-scrollbar pb-4 scroll-smooth"
+        className="flex gap-4 overflow-x-auto no-scrollbar pb-4 scroll-smooth px-6 sm:px-0"
       >
         {products.map(product => (
           <Link
             key={product.id}
             to={`/user/product/${product.id}`}
-            className="flex-none w-[200px] sm:w-[220px] md:w-[240px] lg:w-[260px] bg-white p-4 rounded-[32px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full cursor-pointer block text-left !no-underline !text-gray-900 relative"
+            className="flex-none w-[160px] sm:w-[220px] md:w-[240px] lg:w-[250px] bg-white p-3 sm:p-4 rounded-[24px] sm:rounded-[32px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full cursor-pointer block text-left !no-underline !text-gray-900 relative"
           >
             {/* Top Row: Variants & Wishlist */}
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1 bg-gray-100/80 px-2 py-1 rounded-full backdrop-blur-sm">
-                <div className="w-2 h-2 rounded-full bg-[#E6A57E]"></div>
-                <div className="w-2 h-2 rounded-full bg-[#2d5a3d]"></div>
+              <div className="flex items-center gap-1 bg-gray-100/80 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full backdrop-blur-sm">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#E6A57E]"></div>
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#2d5a3d]"></div>
               </div>
               <button
-                className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   // Heart Logic
                 }}
               >
-                <Heart size={20} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
               </button>
             </div>
 
             {/* Image Area */}
-            <div className="relative h-[150px] w-full mb-3 flex items-center justify-center">
+            <div className="relative h-[120px] sm:h-[150px] lg:h-[180px] w-full mb-2 sm:mb-3 flex items-center justify-center">
               {product.new && (
-                <span className="absolute top-0 right-0 px-2 py-1 text-[10px] font-bold text-white bg-green-500 rounded-full z-10 shadow-sm">
+                <span className="absolute top-0 right-0 px-1.5 sm:px-2 py-0.5 sm:py-1 text-[8px] sm:text-[10px] font-bold text-white bg-green-500 rounded-full z-10 shadow-sm">
                   NEW
                 </span>
               )}
@@ -121,33 +121,33 @@ const ProductSection = ({ title, products, onProductClick }) => {
 
             {/* Content Area */}
             <div className="mt-auto">
-              <div className="flex items-baseline gap-2 mb-1 font-sans">
-                <span className="text-xl font-bold  text-[#b48a5f]">₹{typeof product.price === 'number' ? product.price.toFixed(0) : product.price}</span>
-                <span className="text-xs text-gray-400 line-through">₹{typeof product.price === 'number' ? (product.price * 1.2).toFixed(0) : product.price}</span>
+              <div className="flex items-baseline gap-1 sm:gap-2 mb-0.5 sm:mb-1 font-sans pt-1.5 sm:pt-0">
+                <span className="text-base sm:text-xl font-bold text-[#b48a5f]">₹{typeof product.price === 'number' ? product.price.toFixed(0) : product.price}</span>
+                <span className="text-[10px] sm:text-xs text-gray-400 line-through">₹{typeof product.price === 'number' ? (product.price * 1.2).toFixed(0) : product.price}</span>
               </div>
 
-              <h5 className="text-lg font-bold text-gray-900 my-2 truncate font-serif tracking-tight group-hover:text-[#2d5a3d] transition-colors">{product.name}</h5>
+              <h5 className="text-sm sm:text-lg font-bold text-gray-900 my-1 sm:my-2 truncate font-serif tracking-tight group-hover:text-[#2d5a3d] transition-colors">{product.name}</h5>
 
               {/* Rating Section (Green Badge) */}
-              <div className="flex items-center gap-2 mb-3 font-sans">
+              <div className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3 font-sans">
                 <div className="flex items-center gap-0.5 text-yellow-500">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={12} fill={i < Math.floor(product.rating) ? "currentColor" : "none"} className={i >= Math.floor(product.rating) ? "text-gray-200" : ""} />
+                    <Star key={i} fill={i < Math.floor(product.rating) ? "currentColor" : "none"} className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${i >= Math.floor(product.rating) ? "text-gray-200" : ""}`} />
                   ))}
                 </div>
-                <span className="text-[11px] text-gray-500  font-sans font-medium">({product.reviews} reviews)</span>
+                <span className="text-[9px] sm:text-[11px] text-gray-500 font-sans font-medium">({product.reviews} reviews)</span>
               </div>
 
               {/* Add to Cart Button */}
               <button
                 style={{ borderRadius: "8px" }}
-                className="w-full py-2 bg-[#f0fdf4] hover:bg-[#2d5a3d] text-[#2d5a3d] hover:text-white text-xs font-bold rounded-xl transition-all border border-[#2d5a3d] flex items-center justify-center gap-2 mt-auto group/btn"
+                className="w-full py-1.5 sm:py-2 bg-[#f0fdf4] hover:bg-[#2d5a3d] text-[#2d5a3d] hover:text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition-all border border-[#2d5a3d] flex items-center justify-center gap-1.5 sm:gap-2 mt-auto group/btn"
                 onClick={(e) => {
                   e.stopPropagation();
                   // Add to cart logic
                 }}
               >
-                <ShoppingCart size={14} />
+                <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 Add to Cart
               </button>
             </div>
@@ -190,13 +190,12 @@ export default function Dashboard() {
         return
       }
 
-      // 112px is the perfect stack height.
-      // We trigger MUCH earlier (180px) to ensure the animation completes
-      // BEFORE it physically hits the navbar.
+      // 64px is the height of the sticky header (h-16)
+      // We trigger a bit earlier (80px) to ensure the animation completes smoothly
       const rect = categoryContainerRef.current.getBoundingClientRect()
 
       // Trigger well before the stick point
-      setIsSticky(rect.top <= 180)
+      setIsSticky(rect.top <= 80)
     }
 
     const intervalId = setInterval(checkPosition, 50)
@@ -240,7 +239,7 @@ export default function Dashboard() {
 
   return (
     <div className="w-full min-h-screen bg-[#f8f9fa]" >
-      <div className="w-full px-6 sm:px-8 lg:px-12 py-6">
+      <div className="w-full px-6 sm:px-8 lg:px-20 py-6">
 
 
 
@@ -317,10 +316,11 @@ export default function Dashboard() {
         {/* Circular Categories Grid */}
         <div
           ref={categoryContainerRef}
-          className={`sticky lg:relative top-[113px] lg:top-auto z-40 transition-all duration-300  mb-6 lg:mb-10 px-0 sm:px-8 group/cat ${isSticky ? 'backdrop-blur-md shadow-sm -mx-6 sm:-mx-8 lg:-mx-12 px-6 sm:px-8 lg:px-12' : ''}`}
+          className={`sticky lg:relative top-[55px] lg:top-auto z-40 transition-all duration-300  mb-6 lg:mb-10 px-0 sm:px-8 group/cat ${isSticky ? 'backdrop-blur-md shadow-sm -mx-6 sm:-mx-8 lg:-mx-12 px-6 sm:px-8 lg:px-12' : ''}`}
           style={{
             backgroundColor: isSticky ? '#ffffff' : 'transparent',
-            paddingTop: isSticky ? '12px' : ''
+            paddingTop: isSticky ? '8px' : '',
+            paddingBottom: isSticky ? '5px' : ''
           }}
         >
           <button
