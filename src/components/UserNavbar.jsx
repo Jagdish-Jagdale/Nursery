@@ -22,6 +22,16 @@ export default function UserNavbar() {
         { name: 'Fruit Plants', path: '/user/categories?category=Fruit Plants' },
     ]
 
+    const [isScrolled, setIsScrolled] = useState(false)
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20)
+        }
+        window.addEventListener('scroll', handleScroll)
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
+
     useEffect(() => {
         function handleClickOutside(event) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -45,9 +55,9 @@ export default function UserNavbar() {
     }
 
     return (
-        <nav className="bg-white sticky top-0 z-50 border-b border-gray-100" style={{ fontFamily: "'Inter', sans-serif", width: '100%' }}>
+        <nav className={`bg-white sticky top-0 z-[100] border-b border-gray-100 transition-all duration-300 ${isScrolled ? 'shadow-sm' : ''}`} style={{ fontFamily: "'Inter', sans-serif", width: '100%' }}>
             <div className="w-full px-6 sm:px-8 lg:px-12" style={{ maxWidth: '100%' }}>
-                <div className="flex items-center h-20">
+                <div className={`flex items-center transition-all duration-300 ${isScrolled ? 'h-16' : 'h-20'}`}>
 
                     {/* Logo */}
                     <Link to="/user" className="flex items-center gap-2 !no-underline flex-shrink-0">
@@ -204,17 +214,26 @@ export default function UserNavbar() {
                 </div>
 
                 {/* Mobile Search Bar - Visible only on small screens below the header */}
-                <div className="md:hidden pb-2 px-1">
+                <div className={`md:hidden overflow-hidden transition-all duration-300 ${isScrolled ? 'h-0 opacity-0' : 'h-12 opacity-100'} px-1 pb-2`}>
                     <div className="relative w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                         <input
                             type="text"
-                            placeholder="Search..."
-                            className="w-full h-8 pl-8 pr-4 bg-gray-50 border border-gray-200 text-xs focus:outline-none focus:border-[#2d5a3d] focus:bg-white transition-all shadow-sm"
-                            style={{ borderRadius: '16px' }}
+                            placeholder="Search plants..."
+                            className="w-full h-8 pl-8 pr-4 bg-gray-50 border border-gray-200 text-xs focus:outline-none focus:border-[#2d5a3d] focus:bg-white transition-all shadow-sm font-serif"
+                            style={{ borderRadius: '0px', fontFamily: "'Playfair Display', serif" }}
                         />
                     </div>
                 </div>
+
+                {/* Condensed Mobile Search Label (visible when scrolled) */}
+                <div className={`md:hidden flex items-center justify-between overflow-hidden transition-all duration-300 ${isScrolled ? 'h-12 opacity-100 pb-2' : 'h-0 opacity-0'}`}>
+                    <button className="flex items-center gap-2 bg-white px-4 py-1.5 border border-gray-100 w-full text-left h-full shadow-sm rounded-lg">
+                        <Search size={14} className="text-gray-500" />
+                        <span className="text-xs text-gray-500 font-medium" style={{ fontFamily: "'Playfair Display', serif" }}>Search plants...</span>
+                    </button>
+                </div>
+
             </div>
         </nav>
     )

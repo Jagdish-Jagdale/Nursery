@@ -9,7 +9,7 @@ export default function UserLayout() {
     const isDashboard = location.pathname === '/user' || location.pathname === '/user/'
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col min-h-screen bg-gray-50">
 
             {/* Top Navbar - Visible on all screens, adapts content */}
             <UserNavbar />
