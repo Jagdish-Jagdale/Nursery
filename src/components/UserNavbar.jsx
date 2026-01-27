@@ -7,7 +7,7 @@ export default function UserNavbar() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
     const location = useLocation()
-    const isDashboard = location.pathname === '/user' || location.pathname === '/user/'
+    const isDashboard = location.pathname === '/user' || location.pathname === '/user/' || location.pathname === '/user/categories'
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false)
     const [selectedLanguage, setSelectedLanguage] = useState('English')
@@ -61,7 +61,7 @@ export default function UserNavbar() {
 
             {/* Sticky/Fixed Header for Mobile (Logo + Cart + Icons) */}
             <div className={`${isDashboard ? 'fixed top-0 left-0 right-0 z-[100]' : 'relative'} bg-white w-full px-6 sm:px-8 lg:px-20 border-b md:border-none border-gray-100 md:relative md:top-auto md:z-auto md:bg-transparent md:px-0`} style={{ maxWidth: '100%' }}>
-                <div className={`flex items-center transition-all duration-300 ${isScrolled ? 'h-25' : 'h-15'}`}>
+                <div className={`flex items-center transition-all duration-300 ${isScrolled ? 'h-25 lg:h-28' : 'h-15 lg:h-17'}`}>
 
                     {/* Logo */}
                     <Link to="/user" className="flex items-center gap-2 !no-underline flex-shrink-0">

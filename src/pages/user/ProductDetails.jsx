@@ -286,30 +286,30 @@ export default function ProductDetails() {
                                 key={p.id}
                                 to={`/user/product/${p.id}`}
                                 onClick={() => window.scrollTo(0, 0)}
-                                className="flex-none w-[200px] sm:w-[220px] md:w-[240px] lg:w-[260px] bg-white p-4 rounded-[32px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full cursor-pointer block text-left relative border border-gray-100 !no-underline !text-gray-900"
+                                className="flex-none w-[160px] sm:w-[220px] md:w-[240px] lg:w-[250px] bg-white p-3 sm:p-4 rounded-[24px] sm:rounded-[32px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group flex flex-col h-full cursor-pointer block text-left !no-underline !text-gray-900 relative"
                             >
                                 {/* Top Row: Variants & Wishlist */}
                                 <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-1 bg-gray-100/80 px-2 py-1 rounded-full backdrop-blur-sm">
-                                        <div className="w-2 h-2 rounded-full bg-[#E6A57E]"></div>
-                                        <div className="w-2 h-2 rounded-full bg-[#2d5a3d]"></div>
+                                    <div className="flex items-center gap-1 bg-gray-100/80 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full backdrop-blur-sm">
+                                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#E6A57E]"></div>
+                                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#2d5a3d]"></div>
                                     </div>
                                     <button
-                                        className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors"
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                             // Heart Logic
                                         }}
                                     >
-                                        <Heart size={20} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                                        <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
                                     </button>
                                 </div>
 
                                 {/* Image Area */}
-                                <div className="relative h-[180px] w-full mb-4 flex items-center justify-center">
+                                <div className="relative h-[120px] sm:h-[150px] lg:h-[180px] w-full mb-2 sm:mb-3 flex items-center justify-center">
                                     {p.new && (
-                                        <span className="absolute top-0 right-0 px-2 py-1 text-[10px] font-bold text-white bg-green-500 rounded-full z-10 shadow-sm">
+                                        <span className="absolute top-0 right-0 px-1.5 sm:px-2 py-0.5 sm:py-1 text-[8px] sm:text-[10px] font-bold text-white bg-green-500 rounded-full z-10 shadow-sm">
                                             NEW
                                         </span>
                                     )}
@@ -322,35 +322,36 @@ export default function ProductDetails() {
 
                                 {/* Content Area */}
                                 <div className="mt-auto">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-1 truncate font-serif tracking-tight">{p.name}</h3>
+                                    <div className="flex items-baseline gap-1 sm:gap-2 mb-0.5 sm:mb-1 font-sans pt-1.5 sm:pt-0">
+                                        <span className="text-base sm:text-xl font-bold text-[#b48a5f]">₹{typeof p.price === 'number' ? p.price.toFixed(0) : p.price}</span>
+                                        <span className="text-[10px] sm:text-xs text-gray-400 font-medium">({p.delivery || '2 days'})</span>
+                                    </div>
+
+                                    <h5 className="text-sm sm:text-lg font-bold text-gray-900 my-1 sm:my-2 truncate font-serif tracking-tight group-hover:text-[#2d5a3d] transition-colors">{p.name}</h5>
 
                                     {/* Rating Section (Green Badge) */}
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="flex items-center gap-1 px-2 py-0.5 bg-green-700 text-white rounded-md">
-                                            <span className="text-[10px] font-bold">{p.rating}</span>
-                                            <Star size={8} className="fill-white text-white" />
+                                    <div className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3 font-sans">
+                                        <div className="flex items-center gap-0.5 text-yellow-500">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} fill={i < Math.floor(p.rating) ? "currentColor" : "none"} className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${i >= Math.floor(p.rating) ? "text-gray-200" : ""}`} />
+                                            ))}
                                         </div>
-                                        <span className="text-[11px] text-gray-500 font-medium">({p.reviews})</span>
+                                        <span className="text-[9px] sm:text-[11px] text-gray-500 font-sans font-medium">({p.reviews} reviews)</span>
                                     </div>
 
-                                    {/* Price & Action */}
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <span className="text-xs text-gray-400 block mb-0.5">Price</span>
-                                            <span className="text-xl font-bold text-[#b48a5f]">₹{typeof p.price === 'number' ? p.price.toFixed(0) : p.price}</span>
-                                        </div>
-                                        <button
-                                            style={{ borderRadius: "18px" }}
-                                            className="px-2 py-2 bg-[#2d5a3d] hover:bg-[#234830] text-white text-[10px] font-bold rounded-lg transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-1.5"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                // Add to cart logic
-                                            }}
-                                        >
-                                            <ShoppingCart size={20} />
-                                        </button>
-                                    </div>
+                                    {/* Add to Cart Button */}
+                                    <button
+                                        style={{ borderRadius: "8px" }}
+                                        className="w-full py-1.5 sm:py-2 bg-[#f0fdf4] hover:bg-[#2d5a3d] text-[#2d5a3d] hover:text-white text-[10px] sm:text-xs font-bold rounded-lg sm:rounded-xl transition-all border border-[#2d5a3d] flex items-center justify-center gap-1.5 sm:gap-2 mt-auto group/btn"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            // Add to cart logic
+                                        }}
+                                    >
+                                        <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                        Add to Cart
+                                    </button>
                                 </div>
                             </Link>
                         ))}

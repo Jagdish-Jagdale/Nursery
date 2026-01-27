@@ -12,6 +12,16 @@ const CATEGORIES = [
   { id: 'succulents', name: 'Succulents', image: 'https://images.pexels.com/photos/1903965/pexels-photo-1903965.jpeg?auto=compress&cs=tinysrgb&w=150' },
   { id: 'herbs', name: 'Herbs', image: 'https://images.pexels.com/photos/2583852/pexels-photo-2583852.jpeg?auto=compress&cs=tinysrgb&w=150' },
   { id: 'fruit', name: 'Fruit', image: 'https://images.pexels.com/photos/2363345/pexels-photo-2363345.jpeg?auto=compress&cs=tinysrgb&w=150' },
+  { id: 'medicinal', name: 'Medicinal', image: 'https://images.pexels.com/photos/1407305/pexels-photo-1407305.jpeg?auto=compress&cs=tinysrgb&w=150' },
+  { id: 'ornamental', name: 'Ornamental', image: 'https://images.pexels.com/photos/207518/pexels-photo-207518.jpeg?auto=compress&cs=tinysrgb&w=150' },
+  { id: 'climbers', name: 'Climbers', image: 'https://images.pexels.com/photos/1002703/pexels-photo-1002703.jpeg?auto=compress&cs=tinysrgb&w=150' },
+  { id: 'trees', name: 'Trees', image: 'https://images.pexels.com/photos/1179863/pexels-photo-1179863.jpeg?auto=compress&cs=tinysrgb&w=150' },
+  { id: 'shrubs', name: 'Shrubs', image: 'https://images.pexels.com/photos/1268558/pexels-photo-1268558.jpeg?auto=compress&cs=tinysrgb&w=150' },
+  { id: 'herbs', name: 'Herbs', image: 'https://images.pexels.com/photos/2583852/pexels-photo-2583852.jpeg?auto=compress&cs=tinysrgb&w=150' },
+  { id: 'herbs', name: 'Herbs', image: 'https://images.pexels.com/photos/2583852/pexels-photo-2583852.jpeg?auto=compress&cs=tinysrgb&w=150' },
+  { id: 'herbs', name: 'Herbs', image: 'https://images.pexels.com/photos/2583852/pexels-photo-2583852.jpeg?auto=compress&cs=tinysrgb&w=150' },
+
+  { id: 'cacti', name: 'Cacti', image: 'https://images.pexels.com/photos/1484759/pexels-photo-1484759.jpeg?auto=compress&cs=tinysrgb&w=150' },
 ]
 
 const HERO_SLIDES = [
@@ -59,10 +69,12 @@ const ProductSection = ({ title, products, onProductClick }) => {
   }
 
   return (
-    <div className="mt-12 mb-4 relative -mx-6 sm:mx-5 lg:mx-12">
+    <div className="mt-5 mb-4 relative -mx-6 sm:mx-5 lg:mx-12">
       <div className="flex items-center justify-between mb-1 px-6 sm:px-0">
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <h4 className="text-lg font-semibold font-serif text-gray-900">{title}</h4>
+        <p className="text-sm font-semibold font-serif text-gray-900">See All</p>
       </div>
+      <hr className="mb-4 border-gray-100" />
 
       <button
         onClick={() => scroll('left')}
@@ -123,7 +135,7 @@ const ProductSection = ({ title, products, onProductClick }) => {
             <div className="mt-auto">
               <div className="flex items-baseline gap-1 sm:gap-2 mb-0.5 sm:mb-1 font-sans pt-1.5 sm:pt-0">
                 <span className="text-base sm:text-xl font-bold text-[#b48a5f]">₹{typeof product.price === 'number' ? product.price.toFixed(0) : product.price}</span>
-                <span className="text-[10px] sm:text-xs text-gray-400 line-through">₹{typeof product.price === 'number' ? (product.price * 1.2).toFixed(0) : product.price}</span>
+                <span className="text-[10px] sm:text-xs text-gray-400 font-medium">({product.delivery || '2 days'})</span>
               </div>
 
               <h5 className="text-sm sm:text-lg font-bold text-gray-900 my-1 sm:my-2 truncate font-serif tracking-tight group-hover:text-[#2d5a3d] transition-colors">{product.name}</h5>
@@ -243,9 +255,8 @@ export default function Dashboard() {
 
 
 
-
         {/* Hero Section - Full Width with Sliding Animation */}
-        <div className="relative w-full rounded-[24px] overflow-hidden min-h-[180px] sm:min-h-[320px] lg:min-h-[380px] mb-8 group/hero">
+        <div className="relative w-full rounded-[24px] overflow-hidden min-h-[180px] sm:min-h-[320px] lg:min-h-[500px] mb-12 group/hero">
 
           {HERO_SLIDES.map((slide, index) => (
             <div
@@ -266,7 +277,7 @@ export default function Dashboard() {
               <div className="absolute inset-0 bg-gradient-to-r from-[#f5ebe0]/95 via-[#f5ebe0]/80 to-transparent" />
 
               {/* Content */}
-              <div className="relative z-10 flex items-center h-full min-h-[180px] sm:min-h-[320px] lg:min-h-[380px] px-8 lg:px-12">
+              <div className="relative z-10 flex items-center h-full min-h-[180px] sm:min-h-[320px] lg:min-h-[420px] px-8 lg:px-12">
                 <div className={`max-w-[45%] transition-all duration-1000 delay-300 transform ${index === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
                   <h1 className="text-[32px] lg:text-[44px] font-medium text-gray-900 leading-[1.1] mb-4" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
                     {slide.title}
@@ -313,57 +324,60 @@ export default function Dashboard() {
 
 
 
-        {/* Circular Categories Grid */}
-        <div
-          ref={categoryContainerRef}
-          className={`sticky lg:relative top-[55px] lg:top-auto z-40 transition-all duration-300  mb-6 lg:mb-10 px-0 sm:px-8 group/cat ${isSticky ? 'backdrop-blur-md shadow-sm -mx-6 sm:-mx-8 lg:-mx-12 px-6 sm:px-8 lg:px-12' : ''}`}
-          style={{
-            backgroundColor: isSticky ? '#ffffff' : 'transparent',
-            paddingTop: isSticky ? '8px' : '',
-            paddingBottom: isSticky ? '5px' : ''
-          }}
-        >
+        {/* Categories Section */}
+        <div className="mb-10 lg:mb-14 py-6 relative group/cat border-y border-gray-200 -mx-6 sm:-mx-8 lg:-mx-20 px-6 sm:px-8 lg:px-20 bg-[#f8f9fa]">
+
+
+          {/* Nav Buttons */}
           <button
             onClick={() => {
-              const container = document.getElementById('category-scroll');
-              if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+              if (categoryContainerRef.current) {
+                categoryContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+              }
             }}
-            className={`hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 items-center justify-center text-gray-600 hover:text-[#2d5a3d] hover:scale-110 transition-all opacity-0 group-hover/cat:opacity-100 ${isSticky ? 'left-4' : ''}`}
+            className="hidden lg:flex absolute left-4 top-[60%] -translate-y-1/2 z-20 w-12 h-12 bg-white rounded-full items-center justify-center text-[#2d5a3d] shadow-lg border border-gray-100 opacity-0 group-hover/cat:opacity-100 transition-opacity hover:bg-gray-50"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={24} />
           </button>
 
           <button
             onClick={() => {
-              const container = document.getElementById('category-scroll');
-              if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+              if (categoryContainerRef.current) {
+                categoryContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+              }
             }}
-            className={`hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 items-center justify-center text-gray-600 hover:text-[#2d5a3d] hover:scale-110 transition-all opacity-0 group-hover/cat:opacity-100 ${isSticky ? 'right-4' : ''}`}
+            className="hidden lg:flex absolute right-4 top-[60%] -translate-y-1/2 z-20 w-12 h-12 bg-white rounded-full items-center justify-center text-[#2d5a3d] shadow-lg border border-gray-100 opacity-0 group-hover/cat:opacity-100 transition-opacity hover:bg-gray-50"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={24} />
           </button>
 
+          {/* Categories Row */}
           <div
-            id="category-scroll"
-            className="flex items-center justify-start lg:justify-center gap-3 sm:gap-8 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1"
+            ref={categoryContainerRef}
+            className={`flex items-center gap-4 lg:gap-8 overflow-x-auto no-scrollbar py-1 px-1 sm:px-8`}
           >
-            {CATEGORIES.map(cat => (
-              <button
+            {CATEGORIES.map((cat) => (
+              <div
                 key={cat.id}
-                onClick={() => navigate(`/user/categories?category=${encodeURIComponent(cat.name)}`)}
-                className={`flex flex-col items-center gap-1 transition-all duration-300 flex-shrink-0 group`}
+                className="flex flex-col items-center gap-3 min-w-[80px] sm:min-w-[100px] cursor-pointer group"
+                onClick={() => navigate(`/user/categories?category=${cat.name}`)}
               >
-                <div className={`rounded-full overflow-hidden transition-all duration-300 ${isSticky ? 'w-12 h-12' : 'w-14 h-14 sm:w-20 sm:h-20'} ${!isSticky && activeCategory === cat.id ? 'ring-2 ring-[#2d5a3d] ring-offset-2' : 'group-hover:ring-2 group-hover:ring-gray-200 group-hover:ring-offset-2'}`}>
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
+                <div className={`w-18 h-18 sm:w-24 sm:h-24 rounded-full p-1 border-2 transition-all duration-300 ${activeCategory === cat.id ? 'border-[#b48a5f] scale-105 shadow-md' : 'border-transparent group-hover:border-gray-200'}`}>
+                  <div className="w-full h-full rounded-full overflow-hidden relative">
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    {activeCategory === cat.id && (
+                      <div className="absolute inset-0 bg-[#b48a5f]/10" />
+                    )}
+                  </div>
                 </div>
-                <span className={`transition-all duration-300 text-center ${isSticky ? "text-xs sm:text-sm font-medium text-gray-700" : "text-[10px] sm:text-sm text-gray-600"} ${activeCategory === cat.id ? 'text-[#2d5a3d] font-bold' : ''}`}>
+                <span className={`text-sm font-medium transition-colors text-center ${activeCategory === cat.id ? 'text-[#b48a5f] font-bold' : 'text-gray-600 group-hover:text-gray-900'}`}>
                   {cat.name}
                 </span>
-              </button>
+              </div>
             ))}
           </div>
         </div>
@@ -377,7 +391,7 @@ export default function Dashboard() {
         <ProductSection title="Garden Essentials" products={[...PRODUCTS].sort(() => Math.random() - 0.5).slice(0, 8)} />
       </div>
 
-    </div >
+    </div>
   )
 }
 

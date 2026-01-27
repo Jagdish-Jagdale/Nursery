@@ -42,7 +42,7 @@ export default function ProductCard({ product }) {
                 {/* Price */}
                 <div className="mt-3 flex items-center gap-2">
                     <span className="font-bold text-gray-900 text-base">₹{price}</span>
-                    <span className="text-xs text-gray-400 line-through decoration-gray-300">₹{originalPrice}</span>
+                    <span className="text-xs text-gray-400 font-medium whitespace-nowrap">({product.delivery || '2 days'})</span>
                 </div>
 
                 {/* Free Delivery Badge */}
